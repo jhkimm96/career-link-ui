@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/api/axios';
 import Image from 'next/image';
@@ -14,7 +14,6 @@ import {
   Menu,
   MenuItem,
   Container,
-  Divider,
   Button,
   Stack,
   Paper,
@@ -24,6 +23,7 @@ import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import { useAuth } from '@/libs/authContext';
+import Footer from '@/components/layouts/footer';
 
 const navItems = [
   { label: 'Home', href: '/', submenu: ['Submenu 1', 'Submenu 2'] },
@@ -274,12 +274,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </Container>
 
       {/* Footer */}
-      <Divider />
-      <Box component="footer" sx={{ py: 2, textAlign: 'center', borderTop: '1px solid #ddd' }}>
-        <Typography variant="body2" color="text.secondary">
-          © 2025 Career-Link. All rights reserved.
-        </Typography>
-      </Box>
+      <Footer />
     </>
   );
 }
