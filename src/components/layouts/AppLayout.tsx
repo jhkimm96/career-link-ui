@@ -17,6 +17,7 @@ import {
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import AccountCircle from '@mui/icons-material/AccountCircle';
+import { useRouter } from 'next/navigation';
 
 const navItems = [
   { label: 'Home', href: '/', submenu: ['Submenu 1', 'Submenu 2'] },
@@ -28,7 +29,7 @@ const navItems = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-
+  const router = useRouter();
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, label: string) => {
     setAnchorEl(event.currentTarget);
     setOpenMenu(openMenu === label ? null : label);
@@ -118,7 +119,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <IconButton size="large">
               <NotificationsNoneIcon fontSize="small" />
             </IconButton>
-            <IconButton size="large">
+            <IconButton
+              size="large"
+              onClick={() => {
+                router.push('/mypage');
+              }}
+            >
               <AccountCircle fontSize="small" />
             </IconButton>
           </Box>
