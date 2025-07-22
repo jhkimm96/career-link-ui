@@ -13,7 +13,13 @@ import {
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import axios from 'axios';
+import api from '@/api/axios';
+import { useAuth } from '@/libs/authContext';
+
+interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+}
 
 const LoginPage: React.FC = () => {
   const [loginId, setLoginId] = useState('');
@@ -22,17 +28,20 @@ const LoginPage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const router = useRouter();
 
+  const { isLoggedIn, setIsLoggedIn } = useAuth();
+
   const handleSubmit = async () => {
     try {
-      const res = await axios.post('http://localhost:8080/api/applicants/login', {
+      const res = await api.post<LoginResponse>('/api/users/login', {
         loginId,
         password,
       });
 
-      // 로그인 성공 시 처리 (예: 토큰 저장 등)
-      console.log('로그인 성공:', res.data);
+      localStorage.setItem('accessToken', res.data.accessToken);
+
       setErrorMsg('');
-      router.push('/mypage');
+      setIsLoggedIn(true);
+      router.push('/main');
     } catch (err: any) {
       setErrorMsg('아이디 또는 비밀번호가 올바르지 않습니다.');
     }

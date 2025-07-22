@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import api from '@/api/axios';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -13,11 +15,15 @@ import {
   MenuItem,
   Container,
   Divider,
+  Button,
+  Stack,
+  Paper,
 } from '@mui/material';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded';
 import AccountCircle from '@mui/icons-material/AccountCircle';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/libs/authContext';
 
 const navItems = [
   { label: 'Home', href: '/', submenu: ['Submenu 1', 'Submenu 2'] },
@@ -26,10 +32,21 @@ const navItems = [
   { label: 'Contact', href: '/contact' },
 ];
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+interface AppLayoutProps {
+  children: React.ReactNode;
+}
+
+interface ReissueResponse {
+  accessToken: string;
+}
+
+export default function AppLayout({ children }: AppLayoutProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+  const { isLoggedIn, setIsLoggedIn, remainingTime, setRemainingTime } = useAuth();
   const router = useRouter();
+
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, label: string) => {
     setAnchorEl(event.currentTarget);
     setOpenMenu(openMenu === label ? null : label);
@@ -38,6 +55,44 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const handleClose = () => {
     setAnchorEl(null);
     setOpenMenu(null);
+  };
+
+  const handleExtendSession = async () => {
+    try {
+      const response = await api.post<ReissueResponse>('/api/users/reissue', {});
+      const newAccessToken = response.data.accessToken;
+
+      if (newAccessToken) {
+        localStorage.setItem('accessToken', newAccessToken);
+        setRemainingTime(15 * 60);
+        setIsLoggedIn(true);
+      } else {
+        throw new Error('AccessToken 없음');
+      }
+    } catch (error) {
+      console.error('세션 연장 실패:', error);
+      handleLogout();
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await api.post('/api/users/logout');
+      localStorage.removeItem('accessToken');
+      setIsLoggedIn(false);
+      setRemainingTime(0);
+      router.push('/main');
+    } catch (error) {
+      console.error('로그아웃 API 호출 실패:', error);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   };
 
   return (
@@ -111,22 +166,104 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Box>
           </Box>
 
-          {/* Icons */}
+          {/*Icons */}
           <Box display="flex" alignItems="center" gap={2}>
-            <IconButton size="large">
-              <MailOutlineIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="large">
-              <NotificationsNoneIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="large"
-              onClick={() => {
-                router.push('/mypage');
-              }}
-            >
-              <AccountCircle fontSize="small" />
-            </IconButton>
+            {isLoggedIn ? (
+              <>
+                <IconButton size="large">
+                  <MailOutlineIcon fontSize="small" />
+                </IconButton>
+                <IconButton size="large">
+                  <NotificationsNoneIcon fontSize="small" />
+                </IconButton>
+                <IconButton size="large" onClick={e => handleMenuClick(e, 'logout')}>
+                  <AccountCircle fontSize="small" />
+                </IconButton>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={openMenu === 'logout'}
+                  onClose={handleClose}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      handleClose();
+                      router.push('/mypage'); // 마이페이지로 이동
+                    }}
+                  >
+                    마이페이지
+                  </MenuItem>
+
+                  <MenuItem
+                    onClick={() => {
+                      handleClose();
+                      handleLogout(); // 로그아웃 처리
+                    }}
+                  >
+                    로그아웃
+                  </MenuItem>
+                </Menu>
+                <Paper
+                  elevation={4}
+                  sx={{
+                    px: 1.2,
+                    py: 0.5,
+                    borderRadius: 2,
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <Typography sx={{ fontWeight: 500, fontSize: '10px' }}>⏰ 남은 시간:</Typography>
+                  <Typography sx={{ fontWeight: 600, fontSize: '10px' }}>
+                    {formatTime(remainingTime)}
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      ml: 1,
+                      fontSize: '10px',
+                      borderColor: 'white',
+                      color: 'white',
+                      minWidth: 'auto',
+                      px: 0.8,
+                      py: 0.3,
+                      '&:hover': {
+                        borderColor: 'white',
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                      },
+                    }}
+                    onClick={handleExtendSession} // 🔁 여기에 연장 핸들러 함수 연결
+                  >
+                    연장
+                  </Button>
+                </Paper>
+              </>
+            ) : (
+              <>
+                <Stack direction="row">
+                  <Link href="/login" passHref>
+                    <Button variant="text" size="small">
+                      로그인
+                    </Button>
+                  </Link>
+                  <Link href="/signup" passHref>
+                    <Button variant="text" size="small">
+                      회원가입
+                    </Button>
+                  </Link>
+                  <Link href="/emp" passHref>
+                    <IconButton size="large">
+                      <BusinessRoundedIcon fontSize="small" />
+                    </IconButton>
+                  </Link>
+                </Stack>
+              </>
+            )}
           </Box>
         </Toolbar>
       </AppBar>

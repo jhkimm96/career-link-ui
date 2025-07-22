@@ -2,14 +2,24 @@
 
 import AppLayout from '@/components/layouts/AppLayout';
 import ThemeRegistry from '@/components/layouts/ThemeRegistry';
-import { ReactNode } from 'react';
+import { AuthProvider } from '@/libs/authContext';
+import SessionWatcher from '@/components/SessionWatcher';
+import React from 'react';
 
-export default function PagesLayout({ children }: { children: ReactNode }) {
+export default function PagesLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-25">
-      <ThemeRegistry>
-        <AppLayout>{children}</AppLayout>
-      </ThemeRegistry>
-    </div>
+    <ThemeRegistry>
+      <AuthProvider>
+        <SessionWrapper>{children}</SessionWrapper>
+      </AuthProvider>
+    </ThemeRegistry>
+  );
+}
+
+function SessionWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionWatcher>
+      <AppLayout>{children}</AppLayout>
+    </SessionWatcher>
   );
 }
