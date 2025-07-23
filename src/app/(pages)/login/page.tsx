@@ -28,7 +28,7 @@ const LoginPage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const router = useRouter();
 
-  const { isLoggedIn, setIsLoggedIn } = useAuth();
+  const { isLoggedIn, setIsLoggedIn, setRemainingTime } = useAuth();
 
   const handleSubmit = async () => {
     try {
@@ -41,6 +41,7 @@ const LoginPage: React.FC = () => {
 
       setErrorMsg('');
       setIsLoggedIn(true);
+      setRemainingTime(15 * 60);
       router.push('/main');
     } catch (err: any) {
       setErrorMsg('아이디 또는 비밀번호가 올바르지 않습니다.');

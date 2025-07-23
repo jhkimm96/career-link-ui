@@ -44,6 +44,7 @@ export default function SignupPage() {
     password: string;
     confirmPassword: string;
     socialType: string;
+    userType: string;
     userName: string;
     phoneNumber: string;
     birthDate: Dayjs | null;
@@ -57,6 +58,7 @@ export default function SignupPage() {
     password: '',
     confirmPassword: '',
     socialType: '',
+    userType: 'USER',
     userName: '',
     phoneNumber: '',
     birthDate: null,
@@ -237,6 +239,7 @@ export default function SignupPage() {
           loginId: formData.loginId,
           password: formData.password,
           socialType: formData.socialType,
+          userType: formData.userType,
           userName: formData.userName,
           phoneNumber: formData.phoneNumber,
           birthDate: formData.birthDate ? formData.birthDate.format('YYYY-MM-DD') : '',

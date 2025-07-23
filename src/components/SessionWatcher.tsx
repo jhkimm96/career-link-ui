@@ -37,7 +37,7 @@ export default function SessionWatcher({ children }: Props) {
     if (!isLoggedIn) return;
 
     const checkSession = async () => {
-      if (remainingTime <= 0) {
+      if (remainingTime <= 2) {
         try {
           await api.post('/api/users/logout');
         } catch (error) {
@@ -47,15 +47,19 @@ export default function SessionWatcher({ children }: Props) {
           setIsLoggedIn(false);
           setShowModal(false);
           setRemainingTime(0);
+          dismissedRef.current = false;
         }
       } else if (remainingTime <= 120) {
+        if (dismissedRef.current) return;
+
         try {
           const token = localStorage.getItem('accessToken');
-          if (token) {
-            const decoded = jwtDecode<DecodedToken>(token);
+          const expiresAt = localStorage.getItem('accessTokenExpiresAt');
+
+          if (token && expiresAt) {
             const now = Date.now();
-            const exp = decoded.exp * 1000;
-            if (exp - now <= 120000) {
+            const remaining = Math.floor((+expiresAt - now) / 1000);
+            if (remainingTime <= 120) {
               setShowModal(true);
             } else {
               setShowModal(false);

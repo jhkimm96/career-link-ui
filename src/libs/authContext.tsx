@@ -13,17 +13,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(900); // 초기 15분
+  const [remainingTime, setRemainingTime] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
+    const expiresAt = localStorage.getItem('accessTokenExpiresAt');
+
     setIsLoggedIn(!!token);
 
-    if (token) {
+    if (token && expiresAt) {
       try {
-        const { exp }: any = JSON.parse(atob(token.split('.')[1]));
         const now = Date.now();
-        const remaining = Math.floor((exp * 1000 - now) / 1000);
+        const remaining = Math.floor((+expiresAt - now) / 1000);
         setRemainingTime(remaining > 0 ? remaining : 0);
         console.log('토큰 유효시간 remaining :: ' + remaining);
       } catch {
