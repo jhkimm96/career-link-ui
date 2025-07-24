@@ -36,7 +36,10 @@ export default function AppHeader() {
     { label: 'About', href: '/about' },
     {
       label: 'Sample',
-      submenu: [{ label: 'MainBtnArea', href: '/sample/mainBtnArea' }],
+      submenu: [
+        { label: 'MainBtnArea', href: '/sample/mainBtnArea' },
+        { label: 'SnackBar', href: '/sample/snackBar' },
+      ],
     },
   ];
 
