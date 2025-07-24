@@ -14,6 +14,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [remainingTime, setRemainingTime] = useState(0);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -31,11 +32,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setRemainingTime(0);
       }
     }
+
+    setIsAuthInitialized(true);
   }, []);
 
   return (
     <AuthContext.Provider value={{ isLoggedIn, setIsLoggedIn, remainingTime, setRemainingTime }}>
-      {children}
+      {isAuthInitialized ? children : null}
     </AuthContext.Provider>
   );
 };

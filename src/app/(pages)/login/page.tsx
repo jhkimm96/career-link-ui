@@ -19,6 +19,7 @@ import { useAuth } from '@/libs/authContext';
 interface LoginResponse {
   accessToken: string;
   refreshToken: string;
+  accessTokenExpiresAt: number;
 }
 
 const LoginPage: React.FC = () => {
@@ -38,10 +39,12 @@ const LoginPage: React.FC = () => {
       });
 
       localStorage.setItem('accessToken', res.data.accessToken);
+      const expiresAt = Date.now() + res.data.accessTokenExpiresAt;
+      localStorage.setItem('accessTokenExpiresAt', expiresAt.toString());
 
       setErrorMsg('');
       setIsLoggedIn(true);
-      setRemainingTime(15 * 60);
+      setRemainingTime(Math.floor(expiresAt / 1000));
       router.push('/main');
     } catch (err: any) {
       setErrorMsg('아이디 또는 비밀번호가 올바르지 않습니다.');

@@ -11,6 +11,11 @@ import api from '@/api/axios';
 
 import { IconButton, Button, Menu, MenuItem, Paper, Typography, Box } from '@mui/material';
 
+interface ReissueResponse {
+  accessToken: string;
+  accessTokenExpiresAt: number;
+}
+
 export default function AppHeaderIconIsLogined() {
   const router = useRouter();
   const { isLoggedIn, setIsLoggedIn, remainingTime, setRemainingTime } = useAuth();
@@ -32,10 +37,17 @@ export default function AppHeaderIconIsLogined() {
     try {
       const res = await api.post<ReissueResponse>('/api/users/reissue', {});
       const newAccessToken = res.data.accessToken;
+      const newAccessTokenExpiresAt = res.data.accessTokenExpiresAt;
+
       if (newAccessToken) {
+        const expiresAt = Date.now() + newAccessTokenExpiresAt;
         localStorage.setItem('accessToken', newAccessToken);
-        setRemainingTime(15 * 60);
+        localStorage.setItem('accessTokenExpiresAt', expiresAt.toString());
+
         setIsLoggedIn(true);
+        const now = Date.now();
+        const remaining = Math.floor((+expiresAt - now) / 1000);
+        setRemainingTime(remaining > 0 ? remaining : 0);
       }
     } catch (e) {
       console.error('세션 연장 실패', e);
@@ -46,7 +58,6 @@ export default function AppHeaderIconIsLogined() {
   const handleLogout = async () => {
     try {
       await api.post('/api/users/logout');
-      console.log('ㅇ ㅘㅆ니 ');
       localStorage.removeItem('accessToken');
       console.log(localStorage.getItem('accessToken'));
       setIsLoggedIn(false);
@@ -58,6 +69,8 @@ export default function AppHeaderIconIsLogined() {
   };
 
   const formatTime = (seconds: number) => {
+    if (!Number.isFinite(seconds) || seconds <= 0) return '00:00';
+
     const m = Math.floor(seconds / 60)
       .toString()
       .padStart(2, '0');

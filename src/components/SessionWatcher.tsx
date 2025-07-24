@@ -2,16 +2,11 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import api from '@/api/axios';
-import { jwtDecode } from 'jwt-decode';
 import SessionModal from './SessionModal';
 import { useAuth } from '@/libs/authContext';
 
 interface Props {
   children: React.ReactNode;
-}
-
-interface DecodedToken {
-  exp: number;
 }
 
 export default function SessionWatcher({ children }: Props) {
@@ -21,10 +16,18 @@ export default function SessionWatcher({ children }: Props) {
 
   const { isLoggedIn, setIsLoggedIn, remainingTime, setRemainingTime } = useAuth();
 
-  // 1초마다 감소
+  // 1초마다 남은 시간을 절대시각 기준으로 재계산
   useEffect(() => {
     intervalRef.current = setInterval(() => {
-      setRemainingTime(prev => Math.max(prev - 1, 0));
+      const expiresAt = localStorage.getItem('accessTokenExpiresAt');
+      if (!expiresAt) {
+        setRemainingTime(0);
+        return;
+      }
+
+      const now = Date.now();
+      const remaining = Math.floor((+expiresAt - now) / 1000);
+      setRemainingTime(remaining > 0 ? remaining : 0);
     }, 1000);
 
     return () => {
@@ -32,12 +35,12 @@ export default function SessionWatcher({ children }: Props) {
     };
   }, [setRemainingTime]);
 
-  // 남은 시간 기반 처리
+  // 남은 시간 상태에 따른 세션 처리
   useEffect(() => {
     if (!isLoggedIn) return;
 
     const checkSession = async () => {
-      if (remainingTime <= 2) {
+      if (remainingTime <= 0) {
         try {
           await api.post('/api/users/logout');
         } catch (error) {
@@ -52,22 +55,7 @@ export default function SessionWatcher({ children }: Props) {
       } else if (remainingTime <= 120) {
         if (dismissedRef.current) return;
 
-        try {
-          const token = localStorage.getItem('accessToken');
-          const expiresAt = localStorage.getItem('accessTokenExpiresAt');
-
-          if (token && expiresAt) {
-            const now = Date.now();
-            const remaining = Math.floor((+expiresAt - now) / 1000);
-            if (remainingTime <= 120) {
-              setShowModal(true);
-            } else {
-              setShowModal(false);
-            }
-          }
-        } catch {
-          setShowModal(false);
-        }
+        setShowModal(true);
       } else {
         setShowModal(false);
       }
