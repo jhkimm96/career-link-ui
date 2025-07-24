@@ -25,10 +25,19 @@ export default function AppHeader() {
   const router = useRouter();
 
   const navItems = [
-    { label: 'Home', href: '/', submenu: ['Submenu 1', 'Submenu 2'] },
-    { label: 'Services', href: '/services' },
+    {
+      label: 'Home',
+      submenu: [
+        { label: 'Submenu 1', href: '/submenu1' },
+        { label: 'Submenu 2', href: '/submenu2' },
+      ],
+    },
+    { label: 'Service', href: '/services' },
     { label: 'About', href: '/about' },
-    { label: 'Contact', href: '/contact' },
+    {
+      label: 'Sample',
+      submenu: [{ label: 'MainBtnArea', href: '/sample/mainBtnArea' }],
+    },
   ];
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -102,9 +111,11 @@ export default function AppHeader() {
                     }}
                   >
                     {submenu.map((item, i) => (
-                      <MenuItem key={i} onClick={handleClose} sx={{ fontSize: 14 }}>
-                        {item}
-                      </MenuItem>
+                      <Link key={i} href={item.href} passHref>
+                        <MenuItem onClick={handleClose} sx={{ fontSize: 14 }}>
+                          {item.label}
+                        </MenuItem>
+                      </Link>
                     ))}
                   </Menu>
                 )}
