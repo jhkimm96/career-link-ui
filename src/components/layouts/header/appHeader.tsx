@@ -154,7 +154,7 @@ export default function AppHeader() {
                 </Button>
                 <IconButton
                   onClick={() => {
-                    router.push('/emp');
+                    router.push('/emp/registration');
                   }}
                 >
                   <BusinessRoundedIcon fontSize="small" />
