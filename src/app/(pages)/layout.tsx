@@ -6,10 +6,8 @@ import { ReactNode } from 'react';
 
 export default function PagesLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="px-25">
-      <ThemeRegistry>
-        <AppLayout>{children}</AppLayout>
-      </ThemeRegistry>
-    </div>
+    <ThemeRegistry>
+      <AppLayout>{children}</AppLayout>
+    </ThemeRegistry>
   );
 }
