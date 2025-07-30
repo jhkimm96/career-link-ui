@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import SaveIcon from '@mui/icons-material/Save';
 
 export interface ActionButton {
   label: string;
@@ -35,6 +36,7 @@ interface MainButtonAreaProps {
   advanced?: React.ReactNode;
   /** 기타 버튼 */
   actions?: ActionButton[];
+  saveAction?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 const MainButtonArea: React.FC<MainButtonAreaProps> = ({
@@ -48,6 +50,7 @@ const MainButtonArea: React.FC<MainButtonAreaProps> = ({
   onClickAway = () => {},
   advanced,
   actions = [],
+  saveAction,
 }) => {
   // 버튼 그룹 구성
   const buttons: ActionButton[] = [];
@@ -59,6 +62,7 @@ const MainButtonArea: React.FC<MainButtonAreaProps> = ({
     });
   if (enableSearch) buttons.push({ label: '검색', onClick: onSearch, icon: <SearchIcon /> });
   buttons.push(...actions);
+  const hasSave = Boolean(saveAction);
 
   return (
     <ClickAwayListener onClickAway={onClickAway}>
@@ -104,18 +108,31 @@ const MainButtonArea: React.FC<MainButtonAreaProps> = ({
                 />
               )}
               <Stack direction="row" spacing={1}>
-                {buttons.map((btn, idx) => (
+                {buttons.map((btn, idx) => {
+                  return (
+                    <Button
+                      key={idx}
+                      size="small"
+                      variant="outlined"
+                      startIcon={btn.icon}
+                      onClick={btn.onClick}
+                      sx={{ textTransform: 'none', borderRadius: 2, boxShadow: 1 }}
+                    >
+                      {btn.label}
+                    </Button>
+                  );
+                })}
+                {hasSave && (
                   <Button
-                    key={idx}
                     size="small"
-                    variant="outlined"
-                    startIcon={btn.icon}
-                    onClick={btn.onClick}
+                    variant="contained"
+                    startIcon={<SaveIcon />}
+                    onClick={saveAction}
                     sx={{ textTransform: 'none', borderRadius: 2, boxShadow: 1 }}
                   >
-                    {btn.label}
+                    저장
                   </Button>
-                ))}
+                )}
               </Stack>
             </Stack>
 
