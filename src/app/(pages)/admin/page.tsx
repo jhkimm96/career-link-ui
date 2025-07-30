@@ -3,7 +3,7 @@
 import { DataGrid, GridColDef, GridToolbarContainer, GridToolbarExport } from '@mui/x-data-grid';
 import { Paper, Box, Button, TextField, MenuItem, Typography, Stack } from '@mui/material';
 import { useEffect, useState, useMemo } from 'react';
-import axios from '@/api/axios';
+import api from '@/api/axios';
 
 interface CompanyRequest {
   employerId: number;
@@ -59,7 +59,7 @@ export default function CompanyRequestTable() {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get('/admin/emp/requests');
+      const res = await api.get('/admin/emp/requests');
       setRows(res.data);
       console.log('받은 데이터:', res.data);
     } catch (err) {
@@ -75,7 +75,7 @@ export default function CompanyRequestTable() {
 
   handleApprove = async (id: number) => {
     try {
-      await axios.post(`/admin/emp/${id}/approve`);
+      await api.post(`/admin/emp/${id}/approve`);
       fetchData();
     } catch (err) {
       console.error('승인 실패', err);
