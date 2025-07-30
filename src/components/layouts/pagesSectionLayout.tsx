@@ -18,16 +18,10 @@ export default function PagesSectionLayout({ title, children }: PagesSectionLayo
       <Box
         sx={{
           display: 'grid',
-          pb: { xs: 18, sm: 14 },
           minHeight: '40vh',
           gridTemplateColumns: template,
           gap: 4,
           alignItems: 'stretch',
-          // px: 2,
-          // flexDirection: 'column',
-          // alignItems: 'center',
-          // justifyContent: 'center',
-          // textAlign: 'center',
         }}
       >
         {children}
