@@ -5,12 +5,6 @@ import StarBorderIcon from '@mui/icons-material/StarBorder';
 import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import SendIcon from '@mui/icons-material/Send';
-import ScienceIcon from '@mui/icons-material/Science';
-import SchoolIcon from '@mui/icons-material/School';
-import MicIcon from '@mui/icons-material/Mic';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
-import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 
 export type UserType = 'applicant' | 'company' | 'admin';
 
@@ -38,10 +32,10 @@ export const menus: Record<UserType, SidebarMenuItem[]> = {
       ],
     },
     {
-      label: '받은 제안',
+      label: '메뉴관리',
       icon: MailOutlineIcon,
       children: [
-        { label: '전체 제안', path: '/mypage/offer' },
+        { label: '전체 제안', path: '/mypage/admin/menu' },
         { label: '열람 제안', path: '/mypage/read' },
       ],
     },
@@ -53,12 +47,6 @@ export const menus: Record<UserType, SidebarMenuItem[]> = {
         { label: '제외 기업', path: '/mypage/excluded' },
       ],
     },
-    { label: '진단/검사', path: '/mypage/test', icon: ScienceIcon },
-    { label: '공기업 모의고사', path: '/mypage/mocktest', icon: SchoolIcon },
-    { label: '면접관리', path: '/mypage/interview', icon: MicIcon },
-    { label: '결제 내역', path: '/mypage/payment', icon: ReceiptLongIcon },
-    { label: '내 쿠폰', path: '/mypage/coupon', icon: ConfirmationNumberIcon },
-    { label: '커리어 마일리지', path: '/mypage/mileage', icon: ShoppingBagIcon },
   ],
   company: [],
   admin: [],

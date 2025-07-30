@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ListItem,
@@ -27,6 +28,7 @@ export default function SidebarItem({
   isCollapsed,
   onExpandSidebar,
 }: SidebarItemProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   const isActive = item.path && pathname.startsWith(item.path);
@@ -42,6 +44,8 @@ export default function SidebarItem({
       } else {
         setOpen(prev => !prev);
       }
+    } else if (item.path) {
+      router.push(item.path);
     }
   };
 
