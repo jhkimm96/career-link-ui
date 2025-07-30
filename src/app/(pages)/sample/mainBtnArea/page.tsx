@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import MainButtonArea from '@/components/mainBtn/mainButtonArea';
 import FilterPanel from '@/components/mainBtn/filterPanel';
-import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
 import RegionTabs from '@/app/(pages)/sample/mainBtnArea/filter/regionTabs';
 import BasicFilters from '@/app/(pages)/sample/mainBtnArea/filter/basicFilters';
@@ -80,10 +79,8 @@ export default function Page() {
             )}
           </FilterPanel>
         }
-        actions={[
-          { label: '저장', icon: <SaveIcon />, onClick: handleSave },
-          { label: '등록', icon: <AddIcon />, onClick: handleRegister },
-        ]}
+        actions={[{ label: '등록', icon: <AddIcon />, onClick: handleRegister }]}
+        saveAction={handleSave}
       />
     </Box>
   );
