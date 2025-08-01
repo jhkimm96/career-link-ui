@@ -11,6 +11,7 @@ import {
   Typography,
   Menu,
   MenuItem,
+  Tooltip,
 } from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -152,13 +153,15 @@ export default function AppHeader() {
                 >
                   회원가입
                 </Button>
-                <IconButton
-                  onClick={() => {
-                    router.push('/emp/registration');
-                  }}
-                >
-                  <BusinessRoundedIcon fontSize="small" />
-                </IconButton>
+                <Tooltip title="기업등록 요청하기">
+                  <IconButton
+                    onClick={() => {
+                      router.push('/emp/registration');
+                    }}
+                  >
+                    <BusinessRoundedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               </Stack>
             </>
           )}
