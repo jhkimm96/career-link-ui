@@ -37,6 +37,7 @@ interface MainButtonAreaProps {
   /** 기타 버튼 */
   actions?: ActionButton[];
   saveAction?: React.MouseEventHandler<HTMLButtonElement>;
+  saveLabel?: string;
 }
 
 const MainButtonArea: React.FC<MainButtonAreaProps> = ({
@@ -51,6 +52,7 @@ const MainButtonArea: React.FC<MainButtonAreaProps> = ({
   advanced,
   actions = [],
   saveAction,
+  saveLabel = '저장',
 }) => {
   // 버튼 그룹 구성
   const buttons: ActionButton[] = [];
@@ -130,7 +132,7 @@ const MainButtonArea: React.FC<MainButtonAreaProps> = ({
                     onClick={saveAction}
                     sx={{ textTransform: 'none', borderRadius: 2, boxShadow: 1 }}
                   >
-                    저장
+                    {saveLabel}
                   </Button>
                 )}
               </Stack>
