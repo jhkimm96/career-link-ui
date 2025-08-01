@@ -33,7 +33,6 @@ export default function NotificationSnackbar({
       onClose={onClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       sx={{
-        // footer 높이(64px) + 여유 8px (=72px)만큼 띄워서
         bottom: `${bottom} !important`,
         zIndex: theme => theme.zIndex.snackbar, // MUI 기본 snackbar zIndex(1400)
       }}
