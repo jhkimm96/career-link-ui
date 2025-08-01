@@ -86,7 +86,7 @@ const MainButtonArea: React.FC<MainButtonAreaProps> = ({
               direction={{ xs: 'column', sm: 'row' }}
               spacing={1}
               alignItems="center"
-              justifyContent="space-between"
+              justifyContent={enableSearch ? 'space-between' : 'flex-end'}
             >
               {enableSearch && (
                 <TextField
