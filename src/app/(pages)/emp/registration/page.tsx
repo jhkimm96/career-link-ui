@@ -1,9 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import 'dayjs/locale/ko';
-import { useRouter } from 'next/navigation';
 import api from '@/api/axios';
+import axios from 'axios';
 import {
   Box,
   Button,
@@ -17,24 +16,49 @@ import {
   FormHelperText,
   Typography,
   TextField,
-  Alert,
-  Snackbar,
+  Stack,
 } from '@mui/material';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import PagesSectionLayout from '@/components/layouts/pagesSectionLayout';
+import MainButtonArea from '@/components/mainBtn/mainButtonArea';
+import NotificationSnackbar from '@/components/snackBar';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Dayjs } from 'dayjs';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import 'dayjs/locale/ko';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
 interface DuplicateCheckResponse {
   exists: boolean;
 }
 
+type BusinessStatusResponse = {
+  data: {
+    b_no: string;
+    b_nm: string;
+    b_stt: string;
+    b_stt_cd: string;
+    tax_type: string;
+  }[];
+};
+
 export default function EmpPage() {
-  const [showAlert, setShowAlert] = React.useState(false);
-  const [alertMessage, setAlertMessage] = React.useState('');
-  const [redirectOnClose, setRedirectOnClose] = React.useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'error' | 'success' | 'info' | 'warning';
+  }>({ open: false, message: '', severity: 'info' });
 
   const [formData, setFormData] = React.useState<{
     companyName: string;
     bizRegNo: string;
     bizRegistrationUrl: string;
     companyEmail: string;
+    ceoName: string;
+    establishedDate: Dayjs | null;
     isApproved: string;
     agreeTerms: string;
     agreePrivacy: string;
@@ -44,6 +68,8 @@ export default function EmpPage() {
     bizRegNo: '',
     bizRegistrationUrl: 'test',
     companyEmail: '',
+    ceoName: '',
+    establishedDate: null,
     isApproved: 'N',
     agreeTerms: 'N',
     agreePrivacy: 'N',
@@ -53,6 +79,8 @@ export default function EmpPage() {
   const [helperText, setHelperText] = React.useState({
     companyName: '',
     bizRegNo: '',
+    ceoName: '',
+    establishedDate: '',
     bizRegistrationUrl: '',
     companyEmail: '',
     agreeTerms: '',
@@ -62,6 +90,8 @@ export default function EmpPage() {
   const [hasError, setHasError] = React.useState({
     companyName: false,
     bizRegNo: false,
+    ceoName: false,
+    establishedDate: false,
     bizRegistrationUrl: true,
     companyEmail: false,
     agreeTerms: true,
@@ -72,8 +102,14 @@ export default function EmpPage() {
     terms: false,
     privacy: false,
     marketing: false,
+    success: false,
   });
   const router = useRouter();
+
+  const handleDateChange = (newValue: Dayjs | null) => {
+    setHasError(prev => ({ ...prev, establishedDate: false }));
+    setFormData(prev => ({ ...prev, establishedDate: newValue }));
+  };
 
   // 동의 관련 팝업열기
   const handleOpenDialog = (key: string) => {
@@ -83,19 +119,23 @@ export default function EmpPage() {
   // 동의 관련 팝업 닫기
   const handleCloseDialog = (key: string) => {
     setOpenDialog(prev => ({ ...prev, [key]: false }));
+    if (key === 'success') {
+      // Dialog 애니메이션 고려해서 약간 딜레이 줄 수 있음
+      setTimeout(() => {
+        router.push('/');
+      }, 300); // 300ms 정도면 충분
+    }
   };
 
-  // alert창 닫기 후 main 페이지로 이동
-  const handleClose = () => {
-    setShowAlert(false);
-    if (redirectOnClose) {
-      router.push('/main'); // ✅ 닫을 때만 이동
-    }
+  // snackBar 닫기
+  const handleSnackBarClose = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   // 실시간 입력 정합성 체크
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    setHasError(prev => ({ ...prev, [name]: false }));
 
     if (name === 'bizRegNo') {
       const onlyNums = value.replace(/[^0-9]/g, '');
@@ -149,7 +189,9 @@ export default function EmpPage() {
 
     const errors = {
       companyName: !formData.companyName.trim(),
-      bizRegNo: hasError.bizRegNo,
+      bizRegNo: !formData.bizRegNo,
+      ceoName: !formData.ceoName,
+      establishedDate: !formData.establishedDate,
       bizRegistrationUrl: !formData.bizRegistrationUrl,
       companyEmail: !formData.companyEmail,
       agreeTerms: hasError.agreeTerms,
@@ -160,20 +202,59 @@ export default function EmpPage() {
 
     const hasAnyError = Object.values(hasError).some(error => error);
     if (hasAnyError) {
-      setAlertMessage('입력한 내용을 확인해 주세요.');
-      setShowAlert(true);
+      setSnackbar({ open: true, message: '입력한 내용을 확인해 주세요.', severity: 'warning' });
       return;
     }
 
     try {
       const bizRegNo = formData.bizRegNo.trim();
+      const bizRegNoRaw = formData.bizRegNo.replace(/-/g, '');
+
+      // 사업자등록번호 진위 확인 api
+      const verifyRes = await axios.post<BusinessStatusResponse>(
+        'https://api.odcloud.kr/api/nts-businessman/v1/validate?serviceKey=' +
+          process.env.NEXT_PUBLIC_API_DATA_KEY,
+        {
+          businesses: [
+            {
+              b_no: bizRegNoRaw,
+              b_nm: formData.companyName,
+              p_nm: formData.ceoName,
+              start_dt: formData.establishedDate
+                ? formData.establishedDate.format('YYYYMMDD')
+                : null,
+              p_nm2: '',
+              corp_no: '',
+              b_sector: '',
+              b_type: '',
+              b_adr: '',
+            },
+          ],
+        }
+      );
+
+      const resValid = verifyRes.data.data?.[0]?.valid;
+
+      if (resValid == '02') {
+        setSnackbar({
+          open: true,
+          message: '해당 정보로 등록된 사업자정보를 확인할 수 없습니다.',
+          severity: 'warning',
+        });
+        setHelperText(prev => ({
+          ...prev,
+          bizRegNo: '해당 정보로 등록된 사업자정보를 확인할 수 없습니다.',
+        }));
+        setHasError(prev => ({ ...prev, bizRegNo: true }));
+        return;
+      }
+      // 사업자번호 중복확인
       const checkResponse = await api.get<DuplicateCheckResponse>(
-        `/api/emp/check-bizRegNo?bizRegNo=${bizRegNo}`
+        `/emp/check-bizRegNo?bizRegNo=${bizRegNo}`
       );
 
       if (checkResponse.data.exists) {
-        setAlertMessage('입력한 내용을 확인해 주세요.');
-        setShowAlert(true);
+        setSnackbar({ open: true, message: '입력한 내용을 확인해 주세요.', severity: 'warning' });
         setHelperText(prev => ({
           ...prev,
           bizRegNo: '이미 등록된 사업자번호입니다.',
@@ -183,10 +264,14 @@ export default function EmpPage() {
       }
 
       const response = await api.post(
-        '/api/emp/registration-requests',
+        '/emp/registration-requests',
         {
           companyName: formData.companyName,
           bizRegNo: formData.bizRegNo,
+          ceoName: formData.ceoName,
+          establishedDate: formData.establishedDate
+            ? formData.establishedDate.format('YYYY-MM-DD')
+            : '',
           bizRegistrationUrl: formData.bizRegistrationUrl,
           companyEmail: formData.companyEmail,
           isApproved: formData.isApproved,
@@ -199,285 +284,397 @@ export default function EmpPage() {
         }
       );
 
-      setAlertMessage('기업등록요청이 완료되었습니다.');
-      setShowAlert(true);
-      setRedirectOnClose(true);
+      setOpenDialog(prev => ({ ...prev, success: true }));
     } catch (error: any) {
-      setAlertMessage('기업등록요청 중 오류가 발생했습니다.');
-      setShowAlert(true);
-      setRedirectOnClose(false);
+      setSnackbar({
+        open: true,
+        message: '기업등록요청 중 오류가 발생했습니다. 관리자에게 문의해주세요.',
+        severity: 'error',
+      });
     }
   };
 
   return (
     <main>
-      <Snackbar
-        open={showAlert}
-        autoHideDuration={3000}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert severity="warning" onClose={handleClose} sx={{ width: '100%' }}>
-          {alertMessage}
-        </Alert>
-      </Snackbar>
-      <Box display="flex" justifyContent="center">
+      <NotificationSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={handleSnackBarClose}
+        bottom="70px"
+      />
+      <PagesSectionLayout title={'기업등록요청'}>
         <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{ '& > :not(style)': { m: 1 } }}
-          noValidate
-          autoComplete="off"
+          sx={{
+            p: 5,
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+            rowGap: 2,
+          }}
         >
-          <FormGroup>
-            <TextField
-              label="기업명"
-              name="companyName"
-              value={formData.companyName}
-              onChange={handleChange}
-              error={hasError.companyName}
-              helperText={helperText.companyName}
-              fullWidth
-              sx={{ maxWidth: '400px' }}
-            />
-          </FormGroup>
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{ '& > :not(style)': { m: 1 } }}
+            noValidate
+            autoComplete="off"
+          >
+            <FormGroup>
+              <TextField
+                label="기업명"
+                name="companyName"
+                value={formData.companyName}
+                onChange={handleChange}
+                error={hasError.companyName}
+                helperText={helperText.companyName}
+                size="small"
+                sx={{ maxWidth: '300px' }}
+              />
+            </FormGroup>
 
-          <FormGroup>
-            <TextField
-              label="사업자등록번호"
-              name="bizRegNo"
-              value={formData.bizRegNo}
-              onChange={handleChange}
-              error={hasError.bizRegNo}
-              helperText={helperText.bizRegNo}
-              fullWidth
-              sx={{ maxWidth: '400px' }}
-            />
-          </FormGroup>
+            <FormGroup>
+              <TextField
+                label="사업자등록번호"
+                name="bizRegNo"
+                value={formData.bizRegNo}
+                onChange={handleChange}
+                error={hasError.bizRegNo}
+                helperText={helperText.bizRegNo}
+                size="small"
+                sx={{ maxWidth: '300px' }}
+              />
+            </FormGroup>
 
-          <FormGroup>
-            <TextField
-              label="이메일"
-              name="companyEmail"
-              value={formData.companyEmail}
-              onChange={handleChange}
-              error={hasError.companyEmail}
-              helperText={helperText.companyEmail}
-              fullWidth
-              sx={{ maxWidth: '400px' }}
-            />
-          </FormGroup>
+            <FormGroup>
+              <TextField
+                label="대표자명"
+                name="ceoName"
+                value={formData.ceoName}
+                onChange={handleChange}
+                error={hasError.ceoName}
+                helperText={helperText.ceoName}
+                size="small"
+                sx={{ maxWidth: '300px' }}
+              />
+            </FormGroup>
 
-          <FormGroup>
-            <Box>
-              <Button variant="outlined" component="label" fullWidth sx={{ maxWidth: '400px' }}>
-                사업자등록증 업로드
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  hidden
-                  onChange={e => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setFormData(prev => ({
-                        ...prev,
-                        bizRegistrationUrl: file.name,
-                      }));
-                      setHasError(prev => ({ ...prev, bizRegistrationUrl: false }));
-                      setHelperText(prev => ({
-                        ...prev,
-                        bizRegistrationUrl: '',
-                      }));
+            <FormGroup>
+              <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
+                <DemoContainer components={['DatePicker']}>
+                  <DatePicker
+                    label="설립일"
+                    name="establishedDate"
+                    value={formData.establishedDate}
+                    onChange={handleDateChange}
+                    format="YYYY/MM/DD"
+                    sx={{ maxWidth: '300px' }}
+                    views={['year', 'month', 'day']}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        sx: { width: 300 },
+                        error: hasError.establishedDate,
+                        helperText: helperText.establishedDate,
+                      },
+                    }}
+                  />
+                </DemoContainer>
+              </LocalizationProvider>
+            </FormGroup>
 
-                      // TODO: 실제 업로드 처리 로직 필요 (ex. AWS S3 업로드 후 URL 저장)
-                    } else {
-                      setHasError(prev => ({ ...prev, bizRegistrationUrl: true }));
-                      setHelperText(prev => ({
-                        ...prev,
-                        bizRegistrationUrl: '파일을 업로드해주세요.',
-                      }));
-                    }
-                  }}
+            <FormGroup>
+              <TextField
+                label="이메일"
+                name="companyEmail"
+                value={formData.companyEmail}
+                onChange={handleChange}
+                error={hasError.companyEmail}
+                helperText={helperText.companyEmail}
+                size="small"
+                sx={{ maxWidth: '300px' }}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Box>
+                <Button variant="outlined" component="label" fullWidth sx={{ maxWidth: '300px' }}>
+                  사업자등록증 업로드
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    hidden
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setFormData(prev => ({
+                          ...prev,
+                          bizRegistrationUrl: file.name,
+                        }));
+                        setHasError(prev => ({ ...prev, bizRegistrationUrl: false }));
+                        setHelperText(prev => ({
+                          ...prev,
+                          bizRegistrationUrl: '',
+                        }));
+
+                        // TODO: 실제 업로드 처리 로직 필요 (ex. AWS S3 업로드 후 URL 저장)
+                      } else {
+                        setHasError(prev => ({ ...prev, bizRegistrationUrl: true }));
+                        setHelperText(prev => ({
+                          ...prev,
+                          bizRegistrationUrl: '파일을 업로드해주세요.',
+                        }));
+                      }
+                    }}
+                  />
+                </Button>
+                {formData.bizRegistrationUrl && (
+                  <Typography variant="body2" mt={1}>
+                    업로드된 파일: {formData.bizRegistrationUrl}
+                  </Typography>
+                )}
+                {hasError.bizRegistrationUrl && (
+                  <FormHelperText error>{helperText.bizRegistrationUrl}</FormHelperText>
+                )}
+              </Box>
+            </FormGroup>
+
+            <FormGroup>
+              <Box display="flex" alignItems="center">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.agreeTerms === 'Y'}
+                      onChange={e => {
+                        const isChecked = e.target.checked;
+
+                        setFormData(prev => ({
+                          ...prev,
+                          agreeTerms: isChecked ? 'Y' : 'N',
+                        }));
+
+                        setHasError(prev => ({
+                          ...prev,
+                          agreeTerms: !isChecked,
+                        }));
+                      }}
+                    />
+                  }
+                  label="[필수] 서비스 이용약관 동의"
                 />
-              </Button>
-              {formData.bizRegistrationUrl && (
-                <Typography variant="body2" mt={1}>
-                  업로드된 파일: {formData.bizRegistrationUrl}
+                <Button
+                  onClick={() => handleOpenDialog('terms')}
+                  size="small"
+                  sx={{ textTransform: 'none' }}
+                >
+                  상세 보기
+                </Button>
+              </Box>
+              {hasError.agreeTerms && (
+                <FormHelperText error>서비스 이용약관 동의는 필수입니다.</FormHelperText>
+              )}
+            </FormGroup>
+
+            <Dialog
+              open={openDialog.terms}
+              onClose={() => handleCloseDialog('terms')}
+              maxWidth="sm"
+              fullWidth
+            >
+              <DialogTitle>서비스 이용약관 동의 안내</DialogTitle>
+              <DialogContent dividers>
+                <Typography variant="body2" paragraph>
+                  서비스 이용 약관 상세 내용이 여기에 들어갑니다. 예를 들어, 회원의 의무, 서비스
+                  제공 조건 등... ...
                 </Typography>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => handleCloseDialog('terms')} variant="contained">
+                  확인
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            <FormGroup>
+              <Box display="flex" alignItems="center">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.agreePrivacy === 'Y'}
+                      onChange={e => {
+                        const isChecked = e.target.checked;
+
+                        setFormData(prev => ({
+                          ...prev,
+                          agreePrivacy: isChecked ? 'Y' : 'N',
+                        }));
+
+                        setHasError(prev => ({
+                          ...prev,
+                          agreePrivacy: !isChecked,
+                        }));
+                      }}
+                    />
+                  }
+                  label="[필수] 개인정보 수집 및 이용 동의"
+                />
+                <Button
+                  onClick={() => handleOpenDialog('privacy')}
+                  size="small"
+                  sx={{ textTransform: 'none' }}
+                >
+                  상세 보기
+                </Button>
+              </Box>
+              {hasError.agreePrivacy && (
+                <FormHelperText error>개인정보 이용 동의는 필수입니다.</FormHelperText>
               )}
-              {hasError.bizRegistrationUrl && (
-                <FormHelperText error>{helperText.bizRegistrationUrl}</FormHelperText>
-              )}
-            </Box>
-          </FormGroup>
-          <FormGroup>
-            <Box display="flex" alignItems="center">
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.agreeTerms === 'Y'}
-                    onChange={e => {
-                      const isChecked = e.target.checked;
+            </FormGroup>
 
-                      setFormData(prev => ({
-                        ...prev,
-                        agreeTerms: isChecked ? 'Y' : 'N',
-                      }));
+            <Dialog
+              open={openDialog.privacy}
+              onClose={() => handleCloseDialog('privacy')}
+              maxWidth="sm"
+              fullWidth
+            >
+              <DialogTitle>개인정보 수집 및 이용 안내</DialogTitle>
+              <DialogContent dividers>
+                <Typography variant="body2">
+                  1. 수집 항목: 이름, 연락처, 이메일 등<br />
+                  2. 수집 목적: 회원 가입, 서비스 제공, 고객 응대
+                  <br />
+                  3. 보유 기간: 회원 탈퇴 시까지 또는 법령에 따른 보관기간
+                  <br />
+                  4. 개인정보 제공 거부 시 서비스 이용에 제한이 있을 수 있습니다.
+                  <br />
+                  ...
+                </Typography>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => handleCloseDialog('privacy')} variant="contained">
+                  확인
+                </Button>
+              </DialogActions>
+            </Dialog>
 
-                      setHasError(prev => ({
-                        ...prev,
-                        agreeTerms: !isChecked,
-                      }));
-                    }}
-                  />
-                }
-                label="[필수] 서비스 이용약관 동의"
-              />
-              <Button
-                onClick={() => handleOpenDialog('terms')}
-                size="small"
-                sx={{ textTransform: 'none' }}
-              >
-                상세 보기
-              </Button>
-            </Box>
-            {hasError.agreeTerms && (
-              <FormHelperText error>서비스 이용약관 동의는 필수입니다.</FormHelperText>
-            )}
-          </FormGroup>
+            <FormGroup>
+              <Box display="flex" alignItems="center">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.agreeMarketing === 'Y'}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          agreeMarketing: e.target.checked ? 'Y' : 'N',
+                        })
+                      }
+                    />
+                  }
+                  label="[선택] 마케팅 정보 수신 동의"
+                />
+                <Button
+                  onClick={() => handleOpenDialog('marketing')}
+                  size="small"
+                  sx={{ textTransform: 'none' }}
+                >
+                  상세 보기
+                </Button>
+              </Box>
+            </FormGroup>
 
+            <Dialog
+              open={openDialog.marketing}
+              onClose={() => handleCloseDialog('marketing')}
+              maxWidth="sm"
+              fullWidth
+            >
+              <DialogTitle>[선택] 마케팅 정보 수신 동의 안내</DialogTitle>
+              <DialogContent dividers>
+                <Typography variant="body2">SMS, 문자메세지 수신동의</Typography>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => handleCloseDialog('marketing')} variant="contained">
+                  확인
+                </Button>
+              </DialogActions>
+            </Dialog>
+            <br />
+          </Box>
+          <MainButtonArea saveAction={handleSubmit} saveLabel="기업등록요청" />
           <Dialog
-            open={openDialog.terms}
-            onClose={() => handleCloseDialog('terms')}
-            maxWidth="sm"
-            fullWidth
+            open={openDialog.success}
+            onClose={() => handleCloseDialog('success')}
+            maxWidth="250px"
           >
-            <DialogTitle>서비스 이용약관 동의 안내</DialogTitle>
+            <DialogTitle>기업등록요청 완료</DialogTitle>
             <DialogContent dividers>
-              <Typography variant="body2" paragraph>
-                서비스 이용 약관 상세 내용이 여기에 들어갑니다. 예를 들어, 회원의 의무, 서비스 제공
-                조건 등... ...
+              <Typography>
+                기업등록요청이 완료되었습니다.
+                <br />
+                관리자 검토단계를 거쳐 승인 시 입력하신 이메일로
+                <br />
+                기업정보등록 및 기업회원가입을 위한 메일이 발송됩니다.
+                <br />
+                승인처리는 <strong> 영업일 기준 3~5일</strong> 정도 소요됨을 안내드립니다.
               </Typography>
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => handleCloseDialog('terms')} variant="contained">
+              <Button onClick={() => handleCloseDialog('success')} variant="contained">
                 확인
               </Button>
             </DialogActions>
           </Dialog>
-
-          <FormGroup>
-            <Box display="flex" alignItems="center">
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.agreePrivacy === 'Y'}
-                    onChange={e => {
-                      const isChecked = e.target.checked;
-
-                      setFormData(prev => ({
-                        ...prev,
-                        agreePrivacy: isChecked ? 'Y' : 'N',
-                      }));
-
-                      setHasError(prev => ({
-                        ...prev,
-                        agreePrivacy: !isChecked,
-                      }));
-                    }}
-                  />
-                }
-                label="[필수] 개인정보 수집 및 이용 동의"
-              />
-              <Button
-                onClick={() => handleOpenDialog('privacy')}
-                size="small"
-                sx={{ textTransform: 'none' }}
-              >
-                상세 보기
-              </Button>
-            </Box>
-            {hasError.agreePrivacy && (
-              <FormHelperText error>개인정보 이용 동의는 필수입니다.</FormHelperText>
-            )}
-          </FormGroup>
-
-          <Dialog
-            open={openDialog.privacy}
-            onClose={() => handleCloseDialog('privacy')}
-            maxWidth="sm"
-            fullWidth
-          >
-            <DialogTitle>개인정보 수집 및 이용 안내</DialogTitle>
-            <DialogContent dividers>
-              <Typography variant="body2" paragraph>
-                1. 수집 항목: 이름, 연락처, 이메일 등<br />
-                2. 수집 목적: 회원 가입, 서비스 제공, 고객 응대
-                <br />
-                3. 보유 기간: 회원 탈퇴 시까지 또는 법령에 따른 보관기간
-                <br />
-                4. 개인정보 제공 거부 시 서비스 이용에 제한이 있을 수 있습니다.
-                <br />
-                ...
-              </Typography>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => handleCloseDialog('privacy')} variant="contained">
-                확인
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <FormGroup>
-            <Box display="flex" alignItems="center">
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.agreeMarketing === 'Y'}
-                    onChange={e =>
-                      setFormData({
-                        ...formData,
-                        agreeMarketing: e.target.checked ? 'Y' : 'N',
-                      })
-                    }
-                  />
-                }
-                label="[선택] 마케팅 정보 수신 동의"
-              />
-              <Button
-                onClick={() => handleOpenDialog('marketing')}
-                size="small"
-                sx={{ textTransform: 'none' }}
-              >
-                상세 보기
-              </Button>
-            </Box>
-          </FormGroup>
-
-          <Dialog
-            open={openDialog.marketing}
-            onClose={() => handleCloseDialog('marketing')}
-            maxWidth="sm"
-            fullWidth
-          >
-            <DialogTitle>[선택] 마케팅 정보 수신 동의 안내</DialogTitle>
-            <DialogContent dividers>
-              <Typography variant="body2" paragraph>
-                SMS, 문자메세지 수신동의
-              </Typography>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => handleCloseDialog('marketing')} variant="contained">
-                확인
-              </Button>
-            </DialogActions>
-          </Dialog>
-          <br />
-          <Button variant="contained" fullWidth sx={{ maxWidth: '400px' }} type="submit">
-            기업등록요청
-          </Button>
         </Box>
-      </Box>
+        <Box
+          sx={{
+            p: 2,
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+            backgroundColor: '#f9f9f9',
+          }}
+        >
+          <Typography variant="h6" fontWeight={600} gutterBottom color="primary">
+            기업 등록 요청 시 유의사항
+          </Typography>
+
+          <Stack spacing={1.5} mt={1}>
+            <Stack direction="row" spacing={1}>
+              <CheckCircleOutlineIcon color="primary" fontSize="small" />
+              <Typography variant="body2">
+                다음 항목은 필수 입력입니다: <br />
+                <strong>
+                  기업명, 사업자등록번호, 대표자명, 설립일, 이메일, 사업자등록증, 약관 동의
+                </strong>
+              </Typography>
+            </Stack>
+
+            <Stack direction="row" spacing={1}>
+              <CheckCircleOutlineIcon color="primary" fontSize="small" />
+              <Typography variant="body2">
+                사업자등록증에 기재된 정보와 <strong>정확히 일치해야</strong> 등록이 가능합니다.
+                <br />
+                입력하신 정보가 국세청과 불일치할 경우{' '}
+                <strong>“등록된 사업자정보를 확인할 수 없습니다.”</strong>
+                <br />
+                메시지가 표시됩니다.
+              </Typography>
+            </Stack>
+
+            <Stack direction="row" spacing={1}>
+              <CheckCircleOutlineIcon color="primary" fontSize="small" />
+              <Typography variant="body2">
+                기업등록요청이 완료된 후 관리자 검토단계를 거쳐 승인 시 입력하신 이메일로
+                <br />
+                기업정보등록 및 기업회원가입을 위한 메일이 발송됩니다.
+                <br />
+                승인처리는 <strong> 영업일 기준 3~5일</strong> 정도 소요됨을 안내드립니다.
+              </Typography>
+            </Stack>
+          </Stack>
+        </Box>
+      </PagesSectionLayout>
     </main>
   );
 }
