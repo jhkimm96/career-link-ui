@@ -1,9 +1,10 @@
 'use client';
 
 import { DataGrid, GridColDef, GridToolbarContainer, GridToolbarExport } from '@mui/x-data-grid';
-import { Paper, Box, Button, TextField, MenuItem, Typography, Stack } from '@mui/material';
+import { Paper, Button, TextField, MenuItem, Link, Stack } from '@mui/material';
 import { useEffect, useState, useMemo } from 'react';
 import api from '@/api/axios';
+import dayjs from 'dayjs';
 
 interface CompanyRequest {
   employerId: number;
@@ -12,23 +13,62 @@ interface CompanyRequest {
   companyEmail: string;
   createdAt: string;
   isApproved: string;
+  businessCertUrl?: string;
 }
 
 const columns: GridColDef[] = [
-  { field: 'employerId', headerName: 'ID', width: 90 },
-  { field: 'companyName', headerName: '회사명', width: 150 },
-  { field: 'bizRegNo', headerName: '사업자등록번호', width: 180 },
-  { field: 'companyEmail', headerName: '이메일', width: 200 },
-  { field: 'createdAt', headerName: '신청일자', width: 160 },
+  { field: 'employerId', headerName: 'ID', width: 90, headerAlign: 'center' },
+  { field: 'companyName', headerName: '회사명', width: 150, headerAlign: 'center' },
+  { field: 'bizRegNo', headerName: '사업자등록번호', width: 130, headerAlign: 'center' },
+  { field: 'companyEmail', headerName: '이메일', width: 200, headerAlign: 'center' },
+  {
+    field: 'createdAt',
+    headerName: '신청일자',
+    headerAlign: 'center',
+    width: 160,
+    renderCell: params => {
+      const raw = params.value;
+      return dayjs(raw).format('YYYY-MM-DD HH:mm:ss');
+    },
+  },
+  {
+    field: 'bizRegistrationUrl',
+    headerName: '사업자등록증',
+    width: 130,
+    align: 'center',
+    headerAlign: 'center',
+    sortable: false,
+    renderCell: params => {
+      const url = params.value;
+      if (!url) {
+        return <span style={{ color: '#888' }}>없음</span>;
+      }
+      return (
+        <Link
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          underline="hover"
+          color="primary"
+        >
+          보기
+        </Link>
+      );
+    },
+  },
   {
     field: 'isApproved',
     headerName: '승인여부',
-    width: 130,
+    width: 100,
+    align: 'center',
+    headerAlign: 'center',
   },
   {
     field: 'actions',
     headerName: '관리',
-    width: 150,
+    width: 100,
+    align: 'center',
+    headerAlign: 'center',
     sortable: false,
     renderCell: params => {
       const row = params?.row;

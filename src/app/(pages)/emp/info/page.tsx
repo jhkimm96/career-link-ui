@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/api/axios';
-import { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import {
   Box,
   Button,
@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import * as React from 'react';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import 'dayjs/locale/ko';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -73,7 +74,10 @@ export default function EmployerInfoPage() {
           params: { employerId },
         });
         setEmployer(res.data);
-        setForm(res.data);
+        setForm({
+          ...res.data,
+          establishedDate: dayjs(res.data.establishedDate),
+        });
       } catch (error) {
         console.error('기업 정보 조회 실패:', error);
       } finally {
@@ -147,22 +151,16 @@ export default function EmployerInfoPage() {
             fullWidth
           />
           <TextField label="이메일" value={employer.companyEmail} disabled fullWidth />
-          <TextField
-            label="대표자명"
-            value={form?.ceoName || ''}
-            onChange={e => setForm(prev => (prev ? { ...prev, ceoName: e.target.value } : null))}
-            fullWidth
-          />
+          <TextField label="대표자명" value={form?.ceoName || ''} fullWidth disabled />
           <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
             <DemoContainer components={['DatePicker']}>
               <DatePicker
                 value={form?.establishedDate}
-                onChange={newDate =>
-                  setForm(prev => (prev ? { ...prev, establishedDate: newDate! } : null))
-                }
                 name="establishedDate"
                 label="설립일"
+                format="YYYY/MM/DD"
                 views={['year', 'month', 'day']}
+                disabled
               />
             </DemoContainer>
           </LocalizationProvider>

@@ -30,6 +30,8 @@ import 'dayjs/locale/ko';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { useS3Upload } from '@/hooks/useS3Upload';
+import FileUpload from '@/components/fileUpload';
 
 interface DuplicateCheckResponse {
   exists: boolean;
@@ -46,6 +48,10 @@ type BusinessStatusResponse = {
 };
 
 export default function EmpPage() {
+  const { previewUrl, selectedFile, setFile, getFormData } = useS3Upload({
+    uploadType: 'BUSINESS_CERTIFICATE',
+  });
+
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -66,7 +72,7 @@ export default function EmpPage() {
   }>({
     companyName: '',
     bizRegNo: '',
-    bizRegistrationUrl: 'test',
+    bizRegistrationUrl: '',
     companyEmail: '',
     ceoName: '',
     establishedDate: null,
@@ -192,12 +198,11 @@ export default function EmpPage() {
       bizRegNo: !formData.bizRegNo,
       ceoName: !formData.ceoName,
       establishedDate: !formData.establishedDate,
-      bizRegistrationUrl: !formData.bizRegistrationUrl,
+      bizRegistrationUrl: !selectedFile,
       companyEmail: !formData.companyEmail,
       agreeTerms: hasError.agreeTerms,
       agreePrivacy: hasError.agreePrivacy,
     };
-
     setHasError(errors);
 
     const hasAnyError = Object.values(hasError).some(error => error);
@@ -263,26 +268,54 @@ export default function EmpPage() {
         return;
       }
 
-      const response = await api.post(
-        '/emp/registration-requests',
-        {
-          companyName: formData.companyName,
-          bizRegNo: formData.bizRegNo,
-          ceoName: formData.ceoName,
-          establishedDate: formData.establishedDate
-            ? formData.establishedDate.format('YYYY-MM-DD')
-            : '',
-          bizRegistrationUrl: formData.bizRegistrationUrl,
-          companyEmail: formData.companyEmail,
-          isApproved: formData.isApproved,
-          agreeTerms: formData.agreeTerms,
-          agreePrivacy: formData.agreePrivacy,
-          agreeMarketing: formData.agreeMarketing,
-        },
-        {
-          withCredentials: false,
-        }
+      const requestFormData = getFormData();
+      if (!requestFormData) {
+        setSnackbar({
+          open: true,
+          message: '사업자등록증 파일을 업로드해주세요.',
+          severity: 'warning',
+        });
+        return;
+      }
+
+      const jsonBlob = new Blob(
+        [
+          JSON.stringify({
+            ...formData,
+            establishedDate: formData.establishedDate?.format('YYYY-MM-DD') ?? '',
+          }),
+        ],
+        { type: 'application/json' }
       );
+
+      requestFormData.append('dto', jsonBlob);
+      if (selectedFile) {
+        requestFormData.append('file', selectedFile);
+      }
+
+      console.log(requestFormData);
+      await api.post('/emp/registration-requests', requestFormData);
+
+      // const response = await api.post(
+      //   '/emp/registration-requests',
+      //   {
+      //     companyName: formData.companyName,
+      //     bizRegNo: formData.bizRegNo,
+      //     ceoName: formData.ceoName,
+      //     establishedDate: formData.establishedDate
+      //       ? formData.establishedDate.format('YYYY-MM-DD')
+      //       : '',
+      //     bizRegistrationUrl: formData.bizRegistrationUrl,
+      //     companyEmail: formData.companyEmail,
+      //     isApproved: formData.isApproved,
+      //     agreeTerms: formData.agreeTerms,
+      //     agreePrivacy: formData.agreePrivacy,
+      //     agreeMarketing: formData.agreeMarketing,
+      //   },
+      //   {
+      //     withCredentials: false,
+      //   }
+      // );
 
       setOpenDialog(prev => ({ ...prev, success: true }));
     } catch (error: any) {
@@ -398,44 +431,25 @@ export default function EmpPage() {
 
             <FormGroup>
               <Box>
-                <Button variant="outlined" component="label" fullWidth sx={{ maxWidth: '300px' }}>
-                  사업자등록증 업로드
-                  <input
-                    type="file"
-                    accept="image/*,.pdf"
-                    hidden
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setFormData(prev => ({
-                          ...prev,
-                          bizRegistrationUrl: file.name,
-                        }));
-                        setHasError(prev => ({ ...prev, bizRegistrationUrl: false }));
-                        setHelperText(prev => ({
-                          ...prev,
-                          bizRegistrationUrl: '',
-                        }));
-
-                        // TODO: 실제 업로드 처리 로직 필요 (ex. AWS S3 업로드 후 URL 저장)
-                      } else {
-                        setHasError(prev => ({ ...prev, bizRegistrationUrl: true }));
-                        setHelperText(prev => ({
-                          ...prev,
-                          bizRegistrationUrl: '파일을 업로드해주세요.',
-                        }));
-                      }
-                    }}
-                  />
-                </Button>
-                {formData.bizRegistrationUrl && (
-                  <Typography variant="body2" mt={1}>
-                    업로드된 파일: {formData.bizRegistrationUrl}
-                  </Typography>
-                )}
-                {hasError.bizRegistrationUrl && (
-                  <FormHelperText error>{helperText.bizRegistrationUrl}</FormHelperText>
-                )}
+                <FileUpload
+                  previewUrl={previewUrl ?? undefined}
+                  label={'사업자등록증'}
+                  accept="image/*"
+                  onFileChange={file => {
+                    if (file) {
+                      console.log('📂 파일 선택됨:', file.name);
+                      setFile(file);
+                      setHasError(prev => ({
+                        ...prev,
+                        bizRegistrationUrl: selectedFile,
+                      }));
+                    } else {
+                      console.log('🗑 파일 삭제됨');
+                      setFile(null as any);
+                    }
+                  }}
+                  fileName={selectedFile?.name ?? ''}
+                />
               </Box>
             </FormGroup>
 
@@ -602,11 +616,7 @@ export default function EmpPage() {
             <br />
           </Box>
           <MainButtonArea saveAction={handleSubmit} saveLabel="기업등록요청" />
-          <Dialog
-            open={openDialog.success}
-            onClose={() => handleCloseDialog('success')}
-            maxWidth="250px"
-          >
+          <Dialog open={openDialog.success} onClose={() => handleCloseDialog('success')}>
             <DialogTitle>기업등록요청 완료</DialogTitle>
             <DialogContent dividers>
               <Typography>
