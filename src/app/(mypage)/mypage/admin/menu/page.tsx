@@ -15,6 +15,7 @@ import {
   Typography,
   ListItemIcon,
   createFilterOptions,
+  type AlertColor,
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -49,6 +50,8 @@ import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem, treeItemClasses } from '@mui/x-tree-view/TreeItem';
 import PageSectionLayout from '@/components/layouts/mypage/pageSectionLayout';
 import api from '@/api/axios';
+import NotificationSnackbar from '@/components/snackBar';
+import { closeSnackbar, notifyError, notifySuccess } from '@/api/apiNotify';
 // ── 타입 정의 ──
 type AccessRole = 'all' | 'admin' | 'employer' | 'user';
 
@@ -148,16 +151,29 @@ export default function MenuPage() {
     accessRoles: [],
     icon: '',
   });
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({ open: false, message: '', severity: 'info' });
+
+  const handleClose = () => {
+    closeSnackbar(setSnackbar);
+  };
 
   useEffect(() => {
-    const handlerSearch = async () => {
-      const res = await api.get<MenuDTO[]>('admin/menu');
-      setMenus(res.data);
-    };
-
     handlerSearch();
   }, []);
 
+  const handlerSearch = async () => {
+    try {
+      const res = await api.get<MenuDTO[]>('/admin/menu');
+      setMenus(res.data);
+      notifySuccess(setSnackbar, res.message);
+    } catch (e: any) {
+      notifyError(setSnackbar, e.message);
+    }
+  };
   // ── 핸들러 ──
   const handleFilterRoleChange = (e: SelectChangeEvent) =>
     setFilterRole(e.target.value as AccessRole);
@@ -416,6 +432,12 @@ export default function MenuPage() {
           renderInput={params => <TextField {...params} label="아이콘 검색" />}
         />
       </Box>
+      <NotificationSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={handleClose}
+      />
     </PageSectionLayout>
   );
 }

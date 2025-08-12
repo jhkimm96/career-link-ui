@@ -21,32 +21,29 @@ export interface SidebarMenuItem {
 export const menus: Record<UserType, SidebarMenuItem[]> = {
   applicant: [
     { label: 'MY홈', path: '/mypage', icon: HomeIcon },
-    { label: '이력서/자소서', path: '/mypage/resume', icon: EditIcon },
-    { label: '스크랩/관심기업', path: '/mypage/scrap', icon: StarBorderIcon },
-    {
-      label: '지원할 만한 공고',
-      icon: ThumbUpAltIcon,
-      children: [
-        { label: '추천 공고', path: '/mypage/recommend' },
-        { label: '맞춤 공고', path: '/mypage/custom' },
-      ],
-    },
+    // { label: '이력서/자소서', path: '/mypage/resume', icon: EditIcon },
+    // { label: '스크랩/관심기업', path: '/mypage/scrap', icon: StarBorderIcon },
+    // {
+    //   label: '지원할 만한 공고',
+    //   icon: ThumbUpAltIcon,
+    //   children: [
+    //     { label: '추천 공고', path: '/mypage/recommend' },
+    //     { label: '맞춤 공고', path: '/mypage/custom' },
+    //   ],
+    // },
     {
       label: '메뉴관리',
       icon: MailOutlineIcon,
-      children: [
-        { label: '전체 제안', path: '/mypage/admin/menu' },
-        { label: '열람 제안', path: '/mypage/read' },
-      ],
+      path: '/mypage/admin/menu',
     },
-    {
-      label: '지원내역',
-      icon: SendIcon,
-      children: [
-        { label: '지원 리스트', path: '/mypage/applied' },
-        { label: '제외 기업', path: '/mypage/excluded' },
-      ],
-    },
+    // {
+    //   label: '지원내역',
+    //   icon: SendIcon,
+    //   children: [
+    //     { label: '지원 리스트', path: '/mypage/applied' },
+    //     { label: '제외 기업', path: '/mypage/excluded' },
+    //   ],
+    // },
   ],
   company: [],
   admin: [],

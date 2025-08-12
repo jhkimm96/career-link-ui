@@ -1,29 +1,39 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Box, Button, Typography, Stack } from '@mui/material';
+import { Box, Button, Typography, Stack, type AlertColor } from '@mui/material';
 import NotificationSnackbar from '@/components/snackBar';
+import {
+  closeSnackbar,
+  notifyError,
+  notifyInfo,
+  notifySuccess,
+  notifyWarning,
+} from '@/api/apiNotify';
 
 export default function Page() {
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: 'error' | 'success' | 'info' | 'warning';
+    severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
-
   const handleShowError = () => {
-    // 백엔드 에러 메시지를 가져왔다고 가정
-    const errorMessage = '서버 오류가 발생했습니다. 다시 시도해주세요.';
-    setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+    notifyError(setSnackbar, '서버 오류가 발생했습니다. 다시 시도해주세요.');
   };
+
   const handleShowSuccess = () => {
-    setSnackbar({ open: true, message: '저장되었습니다.', severity: 'success' });
+    notifySuccess(setSnackbar, '저장되었습니다.');
   };
-  const handleClose = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
-  };
+
   const handleShowInfo = () => {
-    setSnackbar({ open: true, message: '안내 메시지입니다.', severity: 'info' });
+    notifyInfo(setSnackbar, '안내 메시지입니다.');
+  };
+  const handleShowWarning = () => {
+    notifyWarning(setSnackbar, '경고메세지입니다.');
+  };
+
+  const handleClose = () => {
+    closeSnackbar(setSnackbar);
   };
   return (
     <Box sx={{ pb: { xs: 18, sm: 14 }, minHeight: '40vh' }}>
@@ -61,6 +71,9 @@ export default function Page() {
           </Button>
           <Button variant="outlined" onClick={handleShowInfo}>
             정보 메시지
+          </Button>
+          <Button variant="outlined" onClick={handleShowWarning}>
+            경고 메시지
           </Button>
         </Stack>
       </Box>

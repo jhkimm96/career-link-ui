@@ -11,6 +11,7 @@ import {
   InputAdornment,
   IconButton,
   Divider,
+  type AlertColor,
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -20,6 +21,8 @@ import PagesSectionLayout from '@/components/layouts/pagesSectionLayout';
 import Image from 'next/image';
 import GoogleIconButton from '@/components/googleLoginIcon';
 import KakaoIconButton from '@/components/kakaoLoginIcon';
+import NotificationSnackbar from '@/components/snackBar';
+import { closeSnackbar, notifyError, notifySuccess } from '@/api/apiNotify';
 
 interface LoginResponse {
   accessToken: string;
@@ -31,10 +34,18 @@ const LoginPage: React.FC = () => {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({ open: false, message: '', severity: 'info' });
   const router = useRouter();
 
   const { isLoggedIn, setIsLoggedIn, setRemainingTime } = useAuth();
+
+  const handleClose = () => {
+    closeSnackbar(setSnackbar);
+  };
 
   const handleSubmit = async () => {
     try {
@@ -47,14 +58,14 @@ const LoginPage: React.FC = () => {
       const expiresAt = Date.now() + res.data.accessTokenExpiresAt;
       localStorage.setItem('accessTokenExpiresAt', expiresAt.toString());
 
-      setErrorMsg('');
       setIsLoggedIn(true);
       setRemainingTime(Math.floor(expiresAt / 1000));
+      notifySuccess(setSnackbar, '로그인되었습니다.');
       router.push('/main');
       return res.data;
       // router.refresh();
     } catch (err: any) {
-      setErrorMsg('아이디 또는 비밀번호가 올바르지 않습니다.');
+      notifyError(setSnackbar, err.message);
     }
   };
 
@@ -95,12 +106,6 @@ const LoginPage: React.FC = () => {
             ),
           }}
         />
-
-        {errorMsg && (
-          <Typography variant="body2" color="error" sx={{ marginBottom: 3 }} mt={1}>
-            {errorMsg}
-          </Typography>
-        )}
 
         <Box display="flex" gap={2} marginBottom={2}>
           <Button
@@ -145,6 +150,12 @@ const LoginPage: React.FC = () => {
       <Box display="flex" justifyContent="center" alignItems="center" flex={1} p={2}>
         <Image src="/cardImg.png" alt="logo" width={400} height={200} />
       </Box>
+      <NotificationSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={handleClose}
+      />
     </PagesSectionLayout>
   );
 };
