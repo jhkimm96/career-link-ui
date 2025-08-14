@@ -130,8 +130,10 @@ const LoginPage: React.FC = () => {
           </Button>
         </Box>
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button size={'small'}>아이디찾기</Button>
-          <Button size={'small'} href="#text-buttons">
+          <Button size={'small'} onClick={() => router.push('/login/find/id')}>
+            아이디찾기
+          </Button>
+          <Button size={'small'} onClick={() => router.push('/login/find/pwd')}>
             비밀번호찾기
           </Button>
         </Stack>
