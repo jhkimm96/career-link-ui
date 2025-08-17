@@ -34,3 +34,34 @@ body {
     color: var(--foreground);
     font-family: Arial, Helvetica, sans-serif;
 }
+
+.MuiDataGrid-columnHeaders,
+.MuiDataGrid-columnHeader,
+.MuiDataGrid-scrollbarFiller{
+    background-color: #f3f6fa !important;
+}
+
+/* DataGrid Row Height */
+.MuiDataGrid-row {
+    max-height: 40px !important;
+    min-height: 40px !important;
+}
+
+/* DataGrid Cell Height (row 내부 cell까지 줄이기) */
+.MuiDataGrid-cell {
+    max-height: 40px !important;
+    min-height: 40px !important;
+    line-height: 40px !important;
+}
+
+/* DataGrid Header Height */
+.MuiDataGrid-columnHeaders {
+    min-height: 40px !important;
+    max-height: 40px !important;
+}
+
+.MuiDataGrid-columnHeader {
+    min-height: 40px !important;
+    max-height: 40px !important;
+    line-height: 40px !important;
+}

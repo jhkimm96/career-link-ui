@@ -17,9 +17,7 @@ export default function MypageLayout({ children }: MypageLayoutProps) {
         <Sidebar />
         <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
           <Header />
-          <Box component="main" sx={{ p: 3 }}>
-            {children}
-          </Box>
+          <Box component="main">{children}</Box>
         </Box>
       </Box>
       <Footer />

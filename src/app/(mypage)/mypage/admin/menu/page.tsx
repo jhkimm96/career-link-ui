@@ -55,7 +55,7 @@ import { closeSnackbar, notifyError, notifySuccess } from '@/api/apiNotify';
 // ── 타입 정의 ──
 type AccessRole = 'all' | 'admin' | 'employer' | 'user';
 
-interface MenuDTO {
+interface MenuDto {
   menuId: number;
   parentId: number | null;
   menuName: string;
@@ -66,7 +66,7 @@ interface MenuDTO {
   accessRoles: AccessRole[];
   icon?: string;
 }
-type MenuNode = MenuDTO & { children: MenuNode[] };
+type MenuNode = MenuDto & { children: MenuNode[] };
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Home: HomeIcon,
@@ -129,7 +129,7 @@ const CustomTreeItem = styled(TreeItem)(({ theme }) => ({
 }));
 
 // ── 재귀로 트리 데이터 구축 ──
-const buildTree = (list: MenuDTO[], parentId: number | null = null): MenuNode[] =>
+const buildTree = (list: MenuDto[], parentId: number | null = null): MenuNode[] =>
   list
     .filter(item => item.parentId === parentId)
     .sort((a, b) => a.displayOrder - b.displayOrder)
@@ -137,11 +137,11 @@ const buildTree = (list: MenuDTO[], parentId: number | null = null): MenuNode[] 
 
 export default function MenuPage() {
   // ── State ──
-  const [menus, setMenus] = useState<MenuDTO[]>([]);
+  const [menus, setMenus] = useState<MenuDto[]>([]);
   const [filterRole, setFilterRole] = useState<AccessRole>('all');
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [expanded, setExpanded] = useState<string[]>(menus.map(m => String(m.menuId)));
-  const [form, setForm] = useState<Omit<MenuDTO, 'menuId'>>({
+  const [form, setForm] = useState<Omit<MenuDto, 'menuId'>>({
     parentId: null,
     menuName: '',
     menuPath: '',
@@ -167,7 +167,7 @@ export default function MenuPage() {
 
   const handlerSearch = async () => {
     try {
-      const res = await api.get<MenuDTO[]>('/admin/menu');
+      const res = await api.get<MenuDto[]>('/admin/menu');
       setMenus(res.data);
       notifySuccess(setSnackbar, res.message);
     } catch (e: any) {

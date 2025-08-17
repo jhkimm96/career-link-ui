@@ -25,9 +25,14 @@ export default function PageSectionLayout({ title, actions, children }: PageSect
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: template,
+          gridTemplateColumns: { xs: '1fr', md: template ?? '1fr 1fr' },
           gap: 4,
           alignItems: 'stretch',
+          '& > *': {
+            minWidth: 0, // ← 넘침 방지 (아주 중요)
+            display: 'flex',
+            flexDirection: 'column',
+          },
         }}
       >
         {children}

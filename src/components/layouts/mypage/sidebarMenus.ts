@@ -36,6 +36,11 @@ export const menus: Record<UserType, SidebarMenuItem[]> = {
       icon: MailOutlineIcon,
       path: '/mypage/admin/menu',
     },
+    {
+      label: '공통코드관리',
+      icon: MailOutlineIcon,
+      path: '/mypage/admin/commonCode',
+    },
     // {
     //   label: '지원내역',
     //   icon: SendIcon,
