@@ -22,6 +22,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PagesSectionLayout from '@/components/layouts/pagesSectionLayout';
 import MainButtonArea from '@/components/mainBtn/mainButtonArea';
 import NotificationSnackbar from '@/components/snackBar';
+import { closeSnackbar, notifyError, notifySuccess } from '@/api/apiNotify';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dayjs } from 'dayjs';
@@ -135,7 +136,7 @@ export default function EmpPage() {
 
   // snackBar 닫기
   const handleSnackBarClose = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
+    closeSnackbar(setSnackbar);
   };
 
   // 실시간 입력 정합성 체크
@@ -207,7 +208,7 @@ export default function EmpPage() {
 
     const hasAnyError = Object.values(hasError).some(error => error);
     if (hasAnyError) {
-      setSnackbar({ open: true, message: '입력한 내용을 확인해 주세요.', severity: 'warning' });
+      notifyError(setSnackbar, '입력한 내용을 확인해 주세요.');
       return;
     }
 
@@ -241,11 +242,7 @@ export default function EmpPage() {
       const resValid = verifyRes.data.data?.[0]?.valid;
 
       if (resValid == '02') {
-        setSnackbar({
-          open: true,
-          message: '해당 정보로 등록된 사업자정보를 확인할 수 없습니다.',
-          severity: 'warning',
-        });
+        notifyError(setSnackbar, '해당 정보로 등록된 사업자정보를 확인할 수 없습니다.');
         setHelperText(prev => ({
           ...prev,
           bizRegNo: '해당 정보로 등록된 사업자정보를 확인할 수 없습니다.',
@@ -259,7 +256,7 @@ export default function EmpPage() {
       );
 
       if (checkResponse.data.exists) {
-        setSnackbar({ open: true, message: '입력한 내용을 확인해 주세요.', severity: 'warning' });
+        notifyError(setSnackbar, '이미 등록된 사업자번호입니다');
         setHelperText(prev => ({
           ...prev,
           bizRegNo: '이미 등록된 사업자번호입니다.',
@@ -270,11 +267,7 @@ export default function EmpPage() {
 
       const requestFormData = getFormData();
       if (!requestFormData) {
-        setSnackbar({
-          open: true,
-          message: '사업자등록증 파일을 업로드해주세요.',
-          severity: 'warning',
-        });
+        notifyError(setSnackbar, '사업자등록증 파일을 업로드해주세요.');
         return;
       }
 
@@ -293,49 +286,17 @@ export default function EmpPage() {
         requestFormData.append('file', selectedFile);
       }
 
-      console.log(requestFormData);
       await api.post('/emp/registration-requests', requestFormData);
 
-      // const response = await api.post(
-      //   '/emp/registration-requests',
-      //   {
-      //     companyName: formData.companyName,
-      //     bizRegNo: formData.bizRegNo,
-      //     ceoName: formData.ceoName,
-      //     establishedDate: formData.establishedDate
-      //       ? formData.establishedDate.format('YYYY-MM-DD')
-      //       : '',
-      //     bizRegistrationUrl: formData.bizRegistrationUrl,
-      //     companyEmail: formData.companyEmail,
-      //     isApproved: formData.isApproved,
-      //     agreeTerms: formData.agreeTerms,
-      //     agreePrivacy: formData.agreePrivacy,
-      //     agreeMarketing: formData.agreeMarketing,
-      //   },
-      //   {
-      //     withCredentials: false,
-      //   }
-      // );
-
       setOpenDialog(prev => ({ ...prev, success: true }));
-    } catch (error: any) {
-      setSnackbar({
-        open: true,
-        message: '기업등록요청 중 오류가 발생했습니다. 관리자에게 문의해주세요.',
-        severity: 'error',
-      });
+      notifySuccess(setSnackbar, '인증번호가 발송되었습니다.');
+    } catch (err: any) {
+      notifyError(setSnackbar, err.message);
     }
   };
 
   return (
     <main>
-      <NotificationSnackbar
-        open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
-        onClose={handleSnackBarClose}
-        bottom="70px"
-      />
       <PagesSectionLayout title={'기업등록요청'}>
         <Box
           sx={{
@@ -361,8 +322,8 @@ export default function EmpPage() {
                 onChange={handleChange}
                 error={hasError.companyName}
                 helperText={helperText.companyName}
-                size="small"
-                sx={{ maxWidth: '300px' }}
+                required
+                fullWidth
               />
             </FormGroup>
 
@@ -374,8 +335,8 @@ export default function EmpPage() {
                 onChange={handleChange}
                 error={hasError.bizRegNo}
                 helperText={helperText.bizRegNo}
-                size="small"
-                sx={{ maxWidth: '300px' }}
+                required
+                fullWidth
               />
             </FormGroup>
 
@@ -387,8 +348,8 @@ export default function EmpPage() {
                 onChange={handleChange}
                 error={hasError.ceoName}
                 helperText={helperText.ceoName}
-                size="small"
-                sx={{ maxWidth: '300px' }}
+                required
+                fullWidth
               />
             </FormGroup>
 
@@ -401,12 +362,11 @@ export default function EmpPage() {
                     value={formData.establishedDate}
                     onChange={handleDateChange}
                     format="YYYY/MM/DD"
-                    sx={{ maxWidth: '300px' }}
                     views={['year', 'month', 'day']}
                     slotProps={{
                       textField: {
-                        size: 'small',
-                        sx: { width: 300 },
+                        required: true,
+                        fullWidth: true,
                         error: hasError.establishedDate,
                         helperText: helperText.establishedDate,
                       },
@@ -424,8 +384,8 @@ export default function EmpPage() {
                 onChange={handleChange}
                 error={hasError.companyEmail}
                 helperText={helperText.companyEmail}
-                size="small"
-                sx={{ maxWidth: '300px' }}
+                required
+                fullWidth
               />
             </FormGroup>
 
@@ -685,6 +645,13 @@ export default function EmpPage() {
           </Stack>
         </Box>
       </PagesSectionLayout>
+      <NotificationSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={handleSnackBarClose}
+        bottom="70px"
+      />
     </main>
   );
 }

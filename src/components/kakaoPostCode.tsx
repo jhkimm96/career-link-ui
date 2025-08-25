@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, TextField, Box } from '@mui/material';
+import { Button, TextField, Stack } from '@mui/material';
 
 interface KakaoPostcodeProps {
   onAddressSelect?: (address: string, postcode: string) => void;
@@ -13,7 +13,7 @@ declare global {
 
 const KakaoPostcode: React.FC<KakaoPostcodeProps> = ({ onAddressSelect }) => {
   const [address, setAddress] = useState('');
-  const [postcode, setPostcod] = useState('');
+  const [postcode, setPostcode] = useState('');
   const [scriptLoaded, setScriptLoaded] = useState(false);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ const KakaoPostcode: React.FC<KakaoPostcodeProps> = ({ onAddressSelect }) => {
         }
 
         setAddress(fullAddress);
-        setPostcod(postcode);
+        setPostcode(postcode);
         if (onAddressSelect) {
           onAddressSelect(fullAddress, postcode);
         }
@@ -58,12 +58,10 @@ const KakaoPostcode: React.FC<KakaoPostcodeProps> = ({ onAddressSelect }) => {
 
   return (
     <div>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1}
+        sx={{ width: '100%', alignItems: { xs: 'stretch', sm: 'center' } }}
       >
         <TextField
           label="도로명+지번 주소 검색"
@@ -80,7 +78,7 @@ const KakaoPostcode: React.FC<KakaoPostcodeProps> = ({ onAddressSelect }) => {
         <Button variant="outlined" color="primary" onClick={handleSearch}>
           주소 검색
         </Button>
-      </Box>
+      </Stack>
     </div>
   );
 };

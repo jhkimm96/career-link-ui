@@ -42,7 +42,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           value={fileName ?? ''}
           disabled
           size="small"
-          sx={{ maxWidth: '250px' }}
+          fullWidth
         />
 
         <Button variant="outlined" component="label" sx={{ whiteSpace: 'nowrap' }}>
