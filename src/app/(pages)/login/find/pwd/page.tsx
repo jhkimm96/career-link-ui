@@ -84,7 +84,7 @@ export default function FindPwdForm() {
     };
   }, [cooldown]);
 
-  const handleFindId = async () => {
+  const handleFindPwd = async () => {
     try {
       const res = await api.post<FindIdResponse>('/api/users/verify-pwd-code', {
         userName,
@@ -184,7 +184,7 @@ export default function FindPwdForm() {
         </Stack>
       </Stack>
 
-      <Button variant="contained" color="primary" size="large" fullWidth onClick={handleFindId}>
+      <Button variant="contained" color="primary" size="large" fullWidth onClick={handleFindPwd}>
         비밀번호 재설정
       </Button>
       <NotificationSnackbar
