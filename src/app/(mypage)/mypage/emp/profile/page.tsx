@@ -57,10 +57,9 @@ interface EmployerInfo {
   employeeCount: number | null;
 }
 
-export default function EmployerInfoPage() {
+export default function EmpProfilePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const employerId = searchParams.get('employerId');
 
   const { previewUrl, selectedFile, setFile } = useS3Upload({ uploadType: 'COMPANY_LOGO' });
 
@@ -89,11 +88,10 @@ export default function EmployerInfoPage() {
   // 기업정보 조회
   useEffect(() => {
     const fetchEmployerInfo = async () => {
-      if (!employerId) return;
       try {
         const res = await api.get<
           Omit<EmployerInfo, 'establishedDate'> & { establishedDate: string | null }
-        >('/emp/info', { params: { employerId } });
+        >('/emp/info'); // ← params 제거
 
         const data = res.data as any;
         setForm({
@@ -109,7 +107,7 @@ export default function EmployerInfoPage() {
       }
     };
     fetchEmployerInfo();
-  }, [employerId]);
+  }, []); // ← employerId 의존성 제거
 
   const handleChange =
     <K extends keyof EmployerInfo>(key: K) =>
@@ -158,15 +156,6 @@ export default function EmployerInfoPage() {
     }
   };
 
-  //기업회원가입 바로가기
-  const goEmployerSignup = () => {
-    if (!employerId) {
-      notifyError(setSnackbar, 'employerId가 없어 회원가입 페이지로 이동할 수 없습니다.');
-      return;
-    }
-    router.push(`/emp/signup?employerId=${encodeURIComponent(employerId)}`);
-  };
-
   return (
     <Container maxWidth="md" className="py-6">
       <Paper
@@ -202,7 +191,7 @@ export default function EmployerInfoPage() {
                         onClick={async () => {
                           try {
                             if (form?.companyLogoUrl) {
-                              await api.delete('/emp/info/logo', { params: { employerId } });
+                              await api.delete('/emp/info/logo');
                               setForm(prev => (prev ? { ...prev, companyLogoUrl: '' } : prev));
                               notifySuccess(setSnackbar, '이미지가 삭제되었습니다.');
                             }
@@ -427,11 +416,7 @@ export default function EmployerInfoPage() {
         </Box>
 
         <Box sx={{ mt: 2 }}>
-          <MainButtonArea
-            actions={[{ label: '기업회원가입', onClick: goEmployerSignup }]}
-            saveAction={handleSave}
-            saveLabel="기업정보저장"
-          />
+          <MainButtonArea saveAction={handleSave} saveLabel="기업정보저장" />
         </Box>
       </Paper>
 
