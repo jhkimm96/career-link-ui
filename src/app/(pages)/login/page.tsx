@@ -96,6 +96,7 @@ const LoginPage: React.FC = () => {
           fullWidth
           sx={{ marginBottom: 1 }}
           onChange={e => setPassword(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleSubmit()}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
