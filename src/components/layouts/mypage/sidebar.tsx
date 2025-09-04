@@ -24,7 +24,7 @@ export default function Sidebar() {
       const treeMenus = await getSidebarMenus();
       setMenus(treeMenus);
     })();
-  });
+  }, []);
 
   return (
     <Box
