@@ -305,7 +305,7 @@ export default function Page() {
         params: { page, size: pageSize, sort, direction, keyword },
       });
       setParents(res.data);
-      setParentRowCount(Number(res.data.pagination?.totalElements ?? res.data.length));
+      setParentRowCount(Number(res.pagination?.totalElements ?? res.data.length));
       setSelectedParent(res.data[0] ?? null);
       notifySuccess(setSnackbar, res.message);
     } catch (e: any) {
@@ -337,7 +337,7 @@ export default function Page() {
         },
       });
       setChildren(res.data);
-      setChildRowCount(Number(res.data.pagination?.totalElements ?? res.data.length));
+      setChildRowCount(Number(res.pagination?.totalElements ?? res.data.length));
       notifySuccess(setSnackbar, res.message);
     } catch (e: any) {
       notifyError(setSnackbar, e.message);
