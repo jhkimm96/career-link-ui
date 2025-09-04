@@ -30,22 +30,19 @@ export default function SidebarItem({
   isCollapsed,
   onExpandSidebar,
 }: SidebarItemProps) {
+  const Icon = item.icon;
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
   const current = normalize(pathname);
   const itemPath = normalize(item.path);
-
-  // ✅ 정확히 같은 URL만 active
   const isActiveExact = !!itemPath && current === itemPath;
 
-  // 자식 중 현재 경로와 정확히 일치하는 것이 있는지
   const hasExactActiveChild = useMemo(
     () => (item.children ?? []).some(c => normalize(c.path) === current),
     [item.children, current]
   );
 
-  // 사이드바가 펼쳐져 있고, 자식 중 선택된 항목이 있으면 열어두기
   useEffect(() => {
     if (!isCollapsed) setOpen(hasExactActiveChild);
     else setOpen(false);
@@ -56,8 +53,6 @@ export default function SidebarItem({
       if (isCollapsed) onExpandSidebar();
       else setOpen(prev => !prev);
     } else if (item.path) {
-      // component=Link + href를 쓰면 push 불필요하지만,
-      // 여기선 버튼 클릭도 허용하므로 남겨둠
       router.push(item.path);
     }
   };
@@ -67,37 +62,28 @@ export default function SidebarItem({
       component={item.path ? Link : 'button'}
       href={item.path || undefined}
       onClick={handleClick}
-      selected={isActiveExact} // ✅ 부모는 "정확히 같을 때만" 파란색
+      selected={isActiveExact}
       sx={{
         px: isCollapsed ? 1.5 : 2,
         py: 1.3,
-        transition: 'padding 0.3s ease-in-out, background-color 0.3s ease-in-out',
         minHeight: 48,
+        transition: 'padding 0.3s ease-in-out',
       }}
     >
       <ListItemIcon
         sx={{
           minWidth: isCollapsed ? 40 : 48,
-          display: 'flex',
           justifyContent: 'center',
-          transition: 'min-width 0.3s ease-in-out',
         }}
-        className="MuiListItemIcon-root"
       >
-        <item.icon fontSize="small" />
+        {Icon && <Icon fontSize="small" />}
       </ListItemIcon>
 
-      {!isCollapsed && (
-        <ListItemText
-          primary={item.label}
-          sx={{
-            transition: 'opacity 0.3s ease-in-out',
-            whiteSpace: 'nowrap',
-          }}
-        />
-      )}
-
-      {!isCollapsed && item.children && (open ? <ExpandLess /> : <ExpandMore />)}
+      {!isCollapsed && <ListItemText primary={item.label} />}
+      {!isCollapsed &&
+        Array.isArray(item.children) &&
+        item.children.length > 0 &&
+        (open ? <ExpandLess /> : <ExpandMore />)}
     </ListItemButton>
   );
 
@@ -115,25 +101,25 @@ export default function SidebarItem({
         <Collapse in={!isCollapsed && open} timeout={{ enter: 500, exit: 300 }} unmountOnExit>
           {item.children.map((child, index) => {
             const childPath = normalize(child.path);
-            const childActive = !!childPath && current === childPath; // ✅ 정확 일치
+            const childActive = !!childPath && current === childPath;
+
             return (
               <ListItem key={index} disablePadding sx={{ pl: 4 }}>
                 <ListItemButton
                   component={Link}
                   href={child.path || ''}
                   selected={childActive}
-                  sx={{
-                    py: 1.1,
-                    transition: 'background-color 0.3s ease-in-out',
-                  }}
+                  sx={{ py: 1.1 }}
                 >
-                  <ListItemText
-                    primary={child.label}
+                  <ListItemIcon
                     sx={{
-                      fontSize: 14,
-                      whiteSpace: 'nowrap',
+                      minWidth: isCollapsed ? 40 : 48,
+                      justifyContent: 'center',
                     }}
-                  />
+                  >
+                    {Icon && <Icon fontSize="small" />}
+                  </ListItemIcon>
+                  <ListItemText primary={child.label} sx={{ fontSize: 14 }} />
                 </ListItemButton>
               </ListItem>
             );

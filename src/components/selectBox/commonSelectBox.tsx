@@ -32,7 +32,7 @@ export default function CommonSelectBox({
   value,
   onChange,
   label,
-  placeholder = '선택',
+  placeholder,
   disabled = false,
   fullWidth = true,
   size = 'small',
@@ -64,12 +64,16 @@ export default function CommonSelectBox({
       <Select
         value={value}
         onChange={(e: SelectChangeEvent<string>) => onChange(e.target.value)}
-        label={label}
         displayEmpty
       >
-        <MenuItem value="">
-          <em>{placeholder}</em>
-        </MenuItem>
+        {placeholder && (
+          <MenuItem value="">
+            <em>{placeholder}</em>
+          </MenuItem>
+        )}
+        {!options.some(opt => opt.code === value) && value && (
+          <MenuItem value={value}>{value}</MenuItem>
+        )}
         {options.map(({ code, codeName }) => (
           <MenuItem key={code} value={code}>
             {codeName}

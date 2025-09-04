@@ -1,7 +1,6 @@
-/* components/mypage/MenuPage.tsx */
 'use client';
 
-import React, { useState, useMemo, useCallback, ChangeEvent, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
   Button,
@@ -15,99 +14,40 @@ import {
   Typography,
   ListItemIcon,
   createFilterOptions,
+  Stack,
   type AlertColor,
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
-// ── 자주 쓰는 아이콘들 import ──
-import HomeIcon from '@mui/icons-material/Home';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import SettingsIcon from '@mui/icons-material/Settings';
-import PeopleIcon from '@mui/icons-material/People';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import MailIcon from '@mui/icons-material/Mail';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import SearchIcon from '@mui/icons-material/Search';
-import EditIcon from '@mui/icons-material/Edit';
-import RemoveIcon from '@mui/icons-material/Remove';
-import InfoIcon from '@mui/icons-material/Info';
-import WarningIcon from '@mui/icons-material/Warning';
-import ErrorIcon from '@mui/icons-material/Error';
-import CheckIcon from '@mui/icons-material/Check';
-import CloseIcon from '@mui/icons-material/Close';
-import FolderIcon from '@mui/icons-material/Folder';
-import FileCopyIcon from '@mui/icons-material/FileCopy';
-import BookmarkIcon from '@mui/icons-material/Bookmark';
-import DescriptionIcon from '@mui/icons-material/Description';
-import BusinessIcon from '@mui/icons-material/Business';
-import ListIcon from '@mui/icons-material/List';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem, treeItemClasses } from '@mui/x-tree-view/TreeItem';
+
 import PageSectionLayout from '@/components/layouts/mypage/pageSectionLayout';
 import api from '@/api/axios';
 import NotificationSnackbar from '@/components/snackBar';
-import { closeSnackbar, notifyError, notifySuccess } from '@/api/apiNotify';
-// ── 타입 정의 ──
-type AccessRole = 'all' | 'admin' | 'employer' | 'user';
+import { closeSnackbar, notifyError, notifySuccess, notifyInfo } from '@/api/apiNotify';
+import CommonSelectBox from '@/components/selectBox/commonSelectBox';
+import { useConfirm } from '@/components/confirm';
+import { ICON_MAP, ICON_NAMES, getMenuIcon } from '@/components/icons';
 
-interface MenuDto {
-  menuId: number;
-  parentId: number | null;
+const iconFilter = createFilterOptions<string>({ matchFrom: 'any', stringify: o => o });
+
+export type AccessRole = 'PUBLIC' | 'ADMIN' | 'EMP' | 'USER';
+export interface MenuDto {
+  menuId: number | string; // 신규는 'NEW_...' 문자열
+  parentId: number | null; // 항상 실제 숫자 ID만 허용 (신규 상위 밑 하위 추가 금지)
   menuName: string;
-  menuPath?: string;
+  menuPath: string;
   level: number;
   displayOrder: number;
-  isActive: 'Y' | 'N';
-  accessRoles: AccessRole[];
+  isActive: string;
+  accessRole: AccessRole;
   icon?: string;
+  isTemp?: boolean;
 }
-type MenuNode = MenuDto & { children: MenuNode[] };
 
-const ICON_MAP: Record<string, React.ElementType> = {
-  Home: HomeIcon,
-  Dashboard: DashboardIcon,
-  Settings: SettingsIcon,
-  People: PeopleIcon,
-  Notifications: NotificationsIcon,
-  AccountCircle: AccountCircleIcon,
-  Mail: MailIcon,
-  CalendarToday: CalendarTodayIcon,
-  ShoppingCart: ShoppingCartIcon,
-  ShoppingBag: ShoppingBagIcon,
-  Search: SearchIcon,
-  Edit: EditIcon,
-  Delete: DeleteIcon,
-  Save: SaveIcon,
-  Add: AddIcon,
-  Remove: RemoveIcon,
-  Info: InfoIcon,
-  Warning: WarningIcon,
-  Error: ErrorIcon,
-  Check: CheckIcon,
-  Close: CloseIcon,
-  Folder: FolderIcon,
-  FileCopy: FileCopyIcon,
-  Bookmark: BookmarkIcon,
-  Description: DescriptionIcon,
-  Business: BusinessIcon,
-  List: ListIcon,
-};
-
-// ── ICON_NAMES는 검색 옵션으로 활용 ──
-const ICON_NAMES = Object.keys(ICON_MAP);
-
-// ── 검색 옵션 (substring 매칭) ──
-const filter = createFilterOptions<string>({
-  matchFrom: 'any',
-  stringify: option => option,
-});
-
-// ── 커스텀 TreeItem ──
 const CustomTreeItem = styled(TreeItem)(({ theme }) => ({
   [`& .${treeItemClasses.content}`]: {
     borderRadius: theme.spacing(0.5),
@@ -128,207 +68,317 @@ const CustomTreeItem = styled(TreeItem)(({ theme }) => ({
   },
 }));
 
-// ── 재귀로 트리 데이터 구축 ──
-const buildTree = (list: MenuDto[], parentId: number | null = null): MenuNode[] =>
-  list
-    .filter(item => item.parentId === parentId)
-    .sort((a, b) => a.displayOrder - b.displayOrder)
-    .map(item => ({ ...item, children: buildTree(list, item.menuId) }));
+const shallowEqualMenu = (a: MenuDto, b: MenuDto) =>
+  a.parentId === b.parentId &&
+  a.menuName === b.menuName &&
+  a.menuPath === b.menuPath &&
+  a.level === b.level &&
+  a.displayOrder === b.displayOrder &&
+  a.isActive === b.isActive &&
+  a.accessRole === b.accessRole &&
+  a.icon === b.icon;
 
 export default function MenuPage() {
-  // ── State ──
+  const confirm = useConfirm();
   const [menus, setMenus] = useState<MenuDto[]>([]);
-  const [filterRole, setFilterRole] = useState<AccessRole>('all');
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [expanded, setExpanded] = useState<string[]>(menus.map(m => String(m.menuId)));
-  const [form, setForm] = useState<Omit<MenuDto, 'menuId'>>({
-    parentId: null,
-    menuName: '',
-    menuPath: '',
-    level: 1,
-    displayOrder: 0,
-    isActive: 'Y',
-    accessRoles: [],
-    icon: '',
-  });
+  const [serverSnapshot, setServerSnapshot] = useState<MenuDto[]>([]);
+  const [deletedIds, setDeletedIds] = useState<Set<number>>(new Set());
+  const [filterRole, setFilterRole] = useState<AccessRole>('PUBLIC');
+  const [selectedId, setSelectedId] = useState<string | null>(null); // 항상 string 비교
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
     severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
+  const nameRef = useRef<HTMLInputElement>(null);
+  const notifyClose = () => closeSnackbar(setSnackbar);
 
-  const handleClose = () => {
-    closeSnackbar(setSnackbar);
-  };
-
-  useEffect(() => {
-    handlerSearch();
-  }, []);
-
-  const handlerSearch = async () => {
+  // 초기 조회
+  const fetchMenus = async (role: AccessRole) => {
     try {
-      const res = await api.get<MenuDto[]>('/admin/menu');
+      const res = await api.get<MenuDto[]>('/admin/menu', { params: { accessRole: role } });
       setMenus(res.data);
+      setServerSnapshot(res.data);
       notifySuccess(setSnackbar, res.message);
     } catch (e: any) {
       notifyError(setSnackbar, e.message);
     }
   };
-  // ── 핸들러 ──
-  const handleFilterRoleChange = (e: SelectChangeEvent) =>
-    setFilterRole(e.target.value as AccessRole);
 
-  const handleText = useCallback(
-    (field: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) => {
-      const v = e.target.value;
-      setForm(prev => ({
-        ...prev,
-        [field]: field === 'displayOrder' ? Number(v) : v,
-      }));
-    },
-    []
+  useEffect(() => {
+    (async () => {
+      await fetchMenus(filterRole);
+    })();
+  }, [filterRole]);
+
+  // 파생
+  const visibleMenus = useMemo(
+    () => menus.filter(m => !deletedIds.has(Number(m.menuId)) && m.isActive === 'Y'),
+    [menus, deletedIds]
   );
 
-  const handleSelect = useCallback(
-    (field: 'level' | 'isActive') => (e: SelectChangeEvent<string>) => {
-      const v = e.target.value;
-      setForm(prev => ({
-        ...prev,
-        [field]: field === 'level' ? Number(v) : (v as 'Y' | 'N'),
-      }));
-    },
-    []
+  const childrenByParent = useMemo(() => {
+    const map = new Map<number | null, MenuDto[]>();
+    for (const m of visibleMenus) {
+      const key = m.parentId;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(m);
+    }
+    for (const arr of map.values()) {
+      arr.sort((a, b) => a.displayOrder - b.displayOrder || Number(a.menuId) - Number(b.menuId));
+    }
+    return map;
+  }, [visibleMenus]);
+
+  const selected = useMemo(
+    () => (selectedId == null ? null : (menus.find(m => String(m.menuId) === selectedId) ?? null)),
+    [menus, selectedId]
   );
+  const isFormDisabled = !selected;
 
-  const handleMultiSelect = useCallback(
-    (field: 'accessRoles') => (e: SelectChangeEvent<AccessRole[]>) => {
-      const v = e.target.value as AccessRole[];
-      setForm(prev => ({ ...prev, [field]: v }));
-    },
-    []
-  );
+  // 더티 체크
+  const isDirty = useMemo(() => {
+    const created = menus.some(
+      m => typeof m.menuId === 'string' && !deletedIds.has(Number(m.menuId))
+    );
+    const updated = menus.some(m => {
+      if (typeof m.menuId !== 'number' || deletedIds.has(m.menuId)) return false;
+      const base = serverSnapshot.find(s => s.menuId === m.menuId);
+      return base && !shallowEqualMenu(m, base);
+    });
+    return created || updated || deletedIds.size > 0;
+  }, [menus, serverSnapshot, deletedIds]);
 
-  const handleIconSelect = useCallback((_: any, val: string | null) => {
-    setForm(prev => ({ ...prev, icon: val ?? '' }));
-  }, []);
+  // 유틸
+  const patchSelected = (patch: Partial<MenuDto>) => {
+    if (!selectedId) return;
+    setMenus(prev => prev.map(m => (String(m.menuId) === selectedId ? { ...m, ...patch } : m)));
+  };
 
-  const handleAdd = useCallback(() => {
-    const nextId = menus.length ? Math.max(...menus.map(m => m.menuId)) + 1 : 1;
-    setMenus(prev => [...prev, { menuId: nextId, ...form }]);
-    setForm(f => ({
-      ...f,
+  // 추가
+  const handleAdd = () => {
+    const parent = selectedId ? menus.find(m => String(m.menuId) === selectedId) : null;
+
+    // ⛔ 부모가 NEW_* 면 금지
+    if (parent && typeof parent.menuId !== 'number') {
+      notifyInfo(setSnackbar, '상위 메뉴를 먼저 저장해 주세요.');
+      return;
+    }
+
+    const parentId = parent ? (parent.menuId as number) : null; // ★ 숫자만 허용
+    const level: 1 | 2 = parent ? 2 : 1;
+
+    const siblings = menus.filter(m => m.parentId === parentId);
+    const nextOrder = siblings.length ? Math.max(...siblings.map(s => s.displayOrder)) + 1 : 1;
+
+    const newItem: MenuDto = {
+      menuId: `NEW_${Date.now()}`,
+      parentId, // ★ 여기엔 반드시 number | null
       menuName: '',
       menuPath: '',
-      displayOrder: 0,
-      accessRoles: [],
+      level,
+      displayOrder: nextOrder,
+      isActive: 'Y',
+      accessRole: filterRole,
       icon: '',
-    }));
-  }, [menus, form]);
+      isTemp: true,
+    };
 
-  const handleDelete = useCallback(() => {
-    if (!selectedId || selectedId === 1) return;
-    const toRemove = new Set<number>();
-    (function collect(id: number) {
-      toRemove.add(id);
-      menus.filter(m => m.parentId === id).forEach(c => collect(c.menuId));
-    })(selectedId);
-    setMenus(prev => prev.filter(m => !toRemove.has(m.menuId)));
-    setSelectedId(null);
-  }, [menus, selectedId]);
+    setMenus(prev => [...prev, newItem]);
+    setSelectedId(String(newItem.menuId));
+  };
 
-  const handleSave = useCallback(() => {
+  // 삭제(상위면 하위 포함)
+  const handleDelete = async () => {
     if (!selectedId) return;
-    setMenus(prev =>
-      prev.map(m => (m.menuId === selectedId ? { ...m, ...form, menuId: selectedId } : m))
-    );
-  }, [form, selectedId]);
+    const target = menus.find(m => String(m.menuId) === selectedId);
+    if (!target) return;
 
-  // ── ROLE 필터링된 메뉴만 보여주기 ──
-  const visibleMenus = useMemo(
-    () =>
-      menus.filter(
-        m => m.isActive === 'Y' && (filterRole === 'all' || m.accessRoles.includes(filterRole))
-      ),
-    [menus, filterRole]
-  );
+    const ok = await confirm({
+      message:
+        target.level === 1
+          ? '선택한 메뉴는 하위 메뉴와 함께 화면에서 제거됩니다.\n저장 시 삭제가 확정됩니다.'
+          : '선택한 메뉴는 화면에서 제거됩니다.\n저장 시 삭제가 확정됩니다.',
+      confirmText: '삭제',
+      cancelText: '취소',
+    });
+    if (!ok) return;
 
-  // ── 트리 렌더링 ──
-  const treeData = useMemo(() => buildTree(visibleMenus), [visibleMenus]);
-  const renderTree = useCallback(
-    (nodes: MenuNode[]): React.ReactNode =>
-      nodes.map(n => {
-        const IconComp = n.icon ? ICON_MAP[n.icon] : undefined;
+    const idsToDelete = new Set<string>(); // string으로 모아두고
+    idsToDelete.add(String(target.menuId));
+    if (target.level === 1) {
+      menus.forEach(m => {
+        if (m.parentId != null && Number(m.parentId) === Number(target.menuId)) {
+          idsToDelete.add(String(m.menuId));
+        }
+      });
+    }
+
+    // 상태에서 제거
+    setMenus(prev => prev.filter(m => !idsToDelete.has(String(m.menuId))));
+    // 기존(숫자)만 삭제집합에 누적
+    setDeletedIds(prev => {
+      const next = new Set(prev);
+      idsToDelete.forEach(idStr => {
+        const num = Number(idStr);
+        if (!Number.isNaN(num)) next.add(num);
+      });
+      return next;
+    });
+    setSelectedId(null);
+  };
+
+  // 저장
+  const handleSave = async () => {
+    const inserts = menus
+      .filter(m => typeof m.menuId === 'string')
+      .map(({ isTemp, menuId, ...rest }) => rest); // ★ parentId 포함해서 그대로 보냄
+
+    const updates = menus
+      .filter(m => {
+        if (typeof m.menuId !== 'number' || deletedIds.has(m.menuId)) return false;
+        const base = serverSnapshot.find(s => s.menuId === m.menuId);
+        return !!base && !shallowEqualMenu(m, base);
+      })
+      .map(m => ({
+        menuId: Number(m.menuId),
+        parentId: m.parentId,
+        menuName: m.menuName,
+        menuPath: m.menuPath,
+        level: m.level,
+        displayOrder: m.displayOrder,
+        isActive: m.isActive,
+        accessRole: m.accessRole,
+        icon: m.icon ?? '',
+      }));
+
+    const deletes = Array.from(deletedIds);
+
+    try {
+      const res = await api.post('/admin/saveMenus', { inserts, updates, deletes });
+      setDeletedIds(new Set());
+      setSelectedId(null);
+      notifySuccess(setSnackbar, res.message);
+      await fetchMenus(filterRole);
+    } catch (e: any) {
+      notifyError(setSnackbar, e.message);
+    }
+  };
+
+  const handleRoleChange = async (e: SelectChangeEvent) => {
+    const next = e.target.value as AccessRole;
+    if (next === filterRole) return;
+    if (isDirty) {
+      const ok = await confirm({
+        message: '저장하지 않은 변경 사항이 있습니다. 계속하시겠습니까?',
+        confirmText: '예',
+        cancelText: '아니오',
+      });
+      if (!ok) return;
+    }
+    setFilterRole(next);
+    setSelectedId(null);
+    setDeletedIds(new Set());
+  };
+
+  // 트리 선택
+  const handleTreeSelect = (_: any, itemId: string | string[] | null) => {
+    const idStr = Array.isArray(itemId) ? itemId[0] : itemId;
+    if (!idStr) return;
+    if (!menus.find(m => String(m.menuId) === idStr)) return;
+    setSelectedId(idStr);
+  };
+
+  const allExpandableIds = useMemo(() => {
+    const ids: string[] = [];
+    childrenByParent.forEach((children, pid) => {
+      if (pid !== null && children.length > 0) ids.push(String(pid));
+    });
+    return ids;
+  }, [childrenByParent]);
+
+  const renderTree = useMemo(() => {
+    const fn = (parentId: number | null): React.ReactNode => {
+      const children = childrenByParent.get(parentId) ?? [];
+      return children.map(n => {
+        const isSel = String(n.menuId) === selectedId;
+        const previewName = isSel ? selected?.menuName || n.menuName : n.menuName;
+        const iconName = isSel ? selected?.icon : n.icon;
+        const IconComp = iconName && ICON_MAP[iconName] ? ICON_MAP[iconName] : null;
+
         return (
           <CustomTreeItem
-            key={n.menuId}
+            key={String(n.menuId)}
             itemId={String(n.menuId)}
             label={
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                {IconComp && <IconComp fontSize="small" />}
-                <Typography sx={{ ml: IconComp ? 1 : 0 }}>{n.menuName}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {IconComp ? <IconComp fontSize="small" /> : null}
+                <Typography fontWeight={isSel ? 700 : 500}>
+                  {previewName || '(이름없음)'}
+                </Typography>
               </Box>
             }
-            onClick={() => {
-              setSelectedId(n.menuId);
-              setForm(f => ({ ...f, parentId: n.menuId }));
-            }}
           >
-            {n.children.length > 0 && renderTree(n.children)}
+            {fn(Number(n.menuId))}
           </CustomTreeItem>
         );
-      }),
-    []
-  );
+      });
+    };
+    return fn;
+  }, [childrenByParent, selectedId, selected?.menuName, selected?.icon]);
 
-  // ── 헤더 액션 ──
+  // 헤더
   const headerActions = (
-    <>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>미리보기 ROLE</InputLabel>
-          <Select label="미리보기 ROLE" value={filterRole} onChange={handleFilterRoleChange}>
-            <MenuItem value="all">전체</MenuItem>
-            <MenuItem value="admin">관리자</MenuItem>
-            <MenuItem value="employer">기업</MenuItem>
-            <MenuItem value="user">지원자</MenuItem>
-          </Select>
-        </FormControl>
+    <Stack direction="row" alignItems="center" spacing={1}>
+      <FormControl size="small" sx={{ minWidth: 180 }}>
+        <InputLabel id="preview-role-label">미리보기 권한</InputLabel>
+        <Select
+          labelId="preview-role-label"
+          value={filterRole}
+          onChange={handleRoleChange}
+          label="미리보기 권한"
+        >
+          <MenuItem value="PUBLIC">PUBLIC</MenuItem>
+          <MenuItem value="ADMIN">ADMIN</MenuItem>
+          <MenuItem value="EMP">EMP</MenuItem>
+          <MenuItem value="USER">USER</MenuItem>
+        </Select>
+      </FormControl>
 
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={handleAdd}
-          sx={{ ml: 1 }}
-        >
-          추가
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<DeleteIcon />}
-          onClick={handleDelete}
-          disabled={!selectedId || selectedId === 1}
-          sx={{ ml: 1 }}
-        >
-          삭제
-        </Button>
-        <Button
-          size="small"
-          variant="contained"
-          startIcon={<SaveIcon />}
-          onClick={handleSave}
-          sx={{ ml: 1 }}
-        >
-          저장
-        </Button>
-      </Box>
-    </>
+      <Button
+        size="small"
+        variant="outlined"
+        startIcon={<AddIcon />}
+        onClick={handleAdd}
+        disabled={selected?.level === 2}
+      >
+        추가
+      </Button>
+      <Button
+        size="small"
+        variant="outlined"
+        color="error"
+        startIcon={<DeleteIcon />}
+        onClick={handleDelete}
+        disabled={!selectedId}
+      >
+        삭제
+      </Button>
+      <Button
+        size="small"
+        variant="contained"
+        startIcon={<SaveIcon />}
+        onClick={handleSave}
+        disabled={!isDirty}
+      >
+        저장
+      </Button>
+    </Stack>
   );
 
   return (
     <PageSectionLayout title="메뉴 관리" actions={headerActions}>
-      {/* 좌측: 메뉴 트리 */}
+      {/* 좌측: 트리 */}
       <Box
         sx={{
           p: 2,
@@ -339,14 +389,15 @@ export default function MenuPage() {
         }}
       >
         <SimpleTreeView
-          expandedItems={expanded}
-          onExpandedItemsChange={(_e, items) => setExpanded(items)}
+          expandedItems={allExpandableIds}
+          selectedItems={selectedId}
+          onSelectedItemsChange={handleTreeSelect}
         >
-          {renderTree(treeData)}
+          {renderTree(null)}
         </SimpleTreeView>
       </Box>
 
-      {/* 우측: 입력 폼 */}
+      {/* 우측: 폼 */}
       <Box
         component="form"
         sx={{
@@ -359,84 +410,72 @@ export default function MenuPage() {
         }}
       >
         <TextField
+          inputRef={nameRef}
           size="small"
           label="메뉴 이름"
-          value={form.menuName}
-          onChange={handleText('menuName')}
+          value={selected?.menuName ?? ''}
+          onChange={e => patchSelected({ menuName: e.target.value })}
+          disabled={isFormDisabled}
         />
         <TextField
           size="small"
           label="경로(URL)"
-          value={form.menuPath}
-          onChange={handleText('menuPath')}
+          value={selected?.menuPath ?? ''}
+          onChange={e => patchSelected({ menuPath: e.target.value })}
+          disabled={isFormDisabled}
         />
         <TextField
           size="small"
           type="number"
           label="정렬순서"
-          value={String(form.displayOrder)}
-          onChange={handleText('displayOrder')}
+          value={selected?.displayOrder ?? 1}
+          onChange={e => patchSelected({ displayOrder: Number(e.target.value) || 1 })}
+          disabled={isFormDisabled}
         />
-
-        <FormControl size="small">
-          <InputLabel>활성여부</InputLabel>
-          <Select label="활성여부" value={form.isActive} onChange={handleSelect('isActive')}>
-            <MenuItem value="Y">Y</MenuItem>
-            <MenuItem value="N">N</MenuItem>
-          </Select>
-        </FormControl>
-
-        <FormControl size="small">
-          <InputLabel>레벨</InputLabel>
-          <Select label="레벨" value={String(form.level)} onChange={handleSelect('level')}>
-            <MenuItem value="1">1</MenuItem>
-            <MenuItem value="2">2</MenuItem>
-          </Select>
-        </FormControl>
-
-        <FormControl size="small">
-          <InputLabel>접근권한</InputLabel>
-          <Select
-            label="접근권한"
-            multiple
-            value={form.accessRoles}
-            onChange={handleMultiSelect('accessRoles')}
-            renderValue={selected => (selected as string[]).join(', ')}
-          >
-            <MenuItem value="admin">관리자</MenuItem>
-            <MenuItem value="employer">기업</MenuItem>
-            <MenuItem value="user">지원자</MenuItem>
-          </Select>
-        </FormControl>
-
-        <Autocomplete<string, false, false, true>
+        <CommonSelectBox
+          label="활성여부"
+          groupCode="USE_YN"
+          value={selected?.isActive ?? ''}
+          onChange={v => patchSelected({ isActive: v })}
+          placeholder="선택"
+          disabled={isFormDisabled}
+        />
+        <TextField size="small" label="레벨" value={selected?.level ?? 1} disabled />
+        <CommonSelectBox
+          label="접근권한"
+          groupCode="MENU_ROLE"
+          value={selected?.accessRole ?? filterRole}
+          onChange={v => patchSelected({ accessRole: v as AccessRole })}
+          disabled
+          placeholder="선택"
+        />
+        <Autocomplete
           freeSolo
           size="small"
           options={ICON_NAMES}
-          filterOptions={filter}
-          value={form.icon}
-          onChange={handleIconSelect}
+          filterOptions={iconFilter}
+          value={selected?.icon ?? ''}
+          onChange={(_, val) => patchSelected({ icon: val ?? '' })}
           renderOption={(props, option) => {
-            // props 에 포함된 key 를 분리하고 나머지를 rest 로 모은 뒤,
-            // JSX 에는 key 를 직접 전달해야 합니다.
-            const { key, ...rest } = props;
-            const IconComp = ICON_MAP[option];
-
+            const { key, ...rest } = props; // key 분리
+            const IconComp = getMenuIcon(option);
             return (
-              <li key={option} {...rest}>
+              <li key={key} {...rest}>
                 <ListItemIcon>{IconComp && <IconComp fontSize="small" />}</ListItemIcon>
                 <Typography>{option}</Typography>
               </li>
             );
           }}
           renderInput={params => <TextField {...params} label="아이콘 검색" />}
+          disabled={isFormDisabled}
         />
       </Box>
+
       <NotificationSnackbar
         open={snackbar.open}
         message={snackbar.message}
         severity={snackbar.severity}
-        onClose={handleClose}
+        onClose={notifyClose}
       />
     </PageSectionLayout>
   );

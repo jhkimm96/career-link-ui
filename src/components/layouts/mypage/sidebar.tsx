@@ -1,21 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import SidebarItem from '@/components/layouts/mypage/sidebarItem';
-import { menus, UserType } from '@/components/layouts/mypage/sidebarMenus';
+import {
+  getSidebarMenus,
+  SidebarMenuItem,
+  UserType,
+} from '@/components/layouts/mypage/sidebarMenus';
 import { Box, IconButton, List } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MenuIcon from '@mui/icons-material/Menu';
+import { useAuth } from '@/libs/authContext';
 
-export default function Sidebar({ userType = 'applicant' }: { userType?: UserType }) {
+export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { userType } = useAuth();
+  const user = userType as UserType;
+
+  const [menus, setMenus] = useState<SidebarMenuItem[]>([]);
   const [open, setOpen] = useState(true);
 
   const toggleSidebar = () => {
     setOpen(prev => !prev);
   };
+
+  useEffect(() => {
+    (async () => {
+      const treeMenus = await getSidebarMenus(user);
+      setMenus(treeMenus);
+    })();
+  }, [user]);
 
   return (
     <Box
@@ -44,21 +60,13 @@ export default function Sidebar({ userType = 'applicant' }: { userType?: UserTyp
       >
         <IconButton
           onClick={() => router.push('/')}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <img
-            src="/c-logo.png"
-            alt="logo"
-            style={{ height: 28, width: 28, objectFit: 'contain' }}
-          />
+          <img src="/c-logo.png" alt="logo" style={{ height: 28, width: 28 }} />
         </IconButton>
 
         {open && (
-          <IconButton onClick={toggleSidebar} sx={{ p: 1 }}>
+          <IconButton onClick={toggleSidebar}>
             <CloseIcon />
           </IconButton>
         )}
@@ -71,7 +79,7 @@ export default function Sidebar({ userType = 'applicant' }: { userType?: UserTyp
       )}
 
       <List sx={{ overflowX: 'hidden' }}>
-        {menus[userType].map((item, index) => (
+        {menus.map((item, index) => (
           <SidebarItem
             key={index}
             item={item}

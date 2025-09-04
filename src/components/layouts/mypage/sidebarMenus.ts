@@ -1,55 +1,53 @@
-import React from 'react';
-import HomeIcon from '@mui/icons-material/Home';
-import EditIcon from '@mui/icons-material/Edit';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt';
-import MailOutlineIcon from '@mui/icons-material/MailOutline';
-import SendIcon from '@mui/icons-material/Send';
+'use client';
 
-export type UserType = 'applicant' | 'company' | 'admin';
+import { MenuDto } from '@/app/(mypage)/mypage/admin/menu/page';
+import api from '@/api/axios';
+import { getMenuIcon } from '@/components/icons';
+import React from 'react';
+
+export type UserType = 'ADMIN' | 'EMP' | 'USER';
 
 export interface SidebarMenuItem {
+  id: number;
   label: string;
   path?: string;
-  icon: React.ElementType;
-  children?: {
-    label: string;
-    path: string;
-  }[];
+  icon?: React.ElementType;
+  children?: SidebarMenuItem[];
 }
 
-export const menus: Record<UserType, SidebarMenuItem[]> = {
-  applicant: [
-    { label: 'MY홈', path: '/mypage', icon: HomeIcon },
-    // { label: '이력서/자소서', path: '/mypage/resume', icon: EditIcon },
-    // { label: '스크랩/관심기업', path: '/mypage/scrap', icon: StarBorderIcon },
-    // {
-    //   label: '지원할 만한 공고',
-    //   icon: ThumbUpAltIcon,
-    //   children: [
-    //     { label: '추천 공고', path: '/mypage/recommend' },
-    //     { label: '맞춤 공고', path: '/mypage/custom' },
-    //   ],
-    // },
-    {
-      label: '메뉴관리',
-      icon: MailOutlineIcon,
-      path: '/mypage/admin/menu',
-    },
-    {
-      label: '공통코드관리',
-      icon: MailOutlineIcon,
-      path: '/mypage/admin/commonCode',
-    },
-    // {
-    //   label: '지원내역',
-    //   icon: SendIcon,
-    //   children: [
-    //     { label: '지원 리스트', path: '/mypage/applied' },
-    //     { label: '제외 기업', path: '/mypage/excluded' },
-    //   ],
-    // },
-  ],
-  company: [],
-  admin: [],
-};
+export async function getSidebarMenus(userType: UserType): Promise<SidebarMenuItem[]> {
+  const res = await api.get<MenuDto[]>('/admin/menu', { params: { accessRole: userType } });
+  return convertFlatToTree(res.data);
+}
+
+function convertFlatToTree(flat: MenuDto[]): SidebarMenuItem[] {
+  const idMap = new Map<number, SidebarMenuItem>();
+  const roots: SidebarMenuItem[] = [];
+
+  flat.forEach(item => {
+    idMap.set(item.menuId as number, {
+      id: item.menuId as number,
+      label: item.menuName,
+      path: item.menuPath,
+      icon: getMenuIcon(item.icon),
+      children: [],
+    });
+  });
+
+  flat.forEach(item => {
+    const current = idMap.get(item.menuId as number);
+    if (!current) return;
+
+    if (item.parentId === null) {
+      roots.push(current);
+    } else {
+      const parent = idMap.get(item.parentId);
+      if (parent) {
+        parent.children = parent.children || [];
+        parent.children.push(current);
+      }
+    }
+  });
+
+  return roots;
+}

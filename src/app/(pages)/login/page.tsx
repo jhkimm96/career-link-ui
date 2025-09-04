@@ -28,6 +28,7 @@ interface LoginResponse {
   accessToken: string;
   refreshToken: string;
   accessTokenExpiresAt: number;
+  role: string;
 }
 
 const LoginPage: React.FC = () => {
@@ -57,6 +58,7 @@ const LoginPage: React.FC = () => {
       localStorage.setItem('accessToken', res.data.accessToken);
       const expiresAt = Date.now() + res.data.accessTokenExpiresAt;
       localStorage.setItem('accessTokenExpiresAt', expiresAt.toString());
+      localStorage.setItem('role', res.data.role);
 
       setIsLoggedIn(true);
       setRemainingTime(Math.floor(expiresAt / 1000));
@@ -96,7 +98,6 @@ const LoginPage: React.FC = () => {
           fullWidth
           sx={{ marginBottom: 1 }}
           onChange={e => setPassword(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSubmit()}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
