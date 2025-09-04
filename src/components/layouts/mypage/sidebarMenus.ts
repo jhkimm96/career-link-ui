@@ -5,8 +5,6 @@ import api from '@/api/axios';
 import { getMenuIcon } from '@/components/icons';
 import React from 'react';
 
-export type UserType = 'ADMIN' | 'EMP' | 'USER';
-
 export interface SidebarMenuItem {
   id: number;
   label: string;
@@ -15,8 +13,8 @@ export interface SidebarMenuItem {
   children?: SidebarMenuItem[];
 }
 
-export async function getSidebarMenus(userType: UserType): Promise<SidebarMenuItem[]> {
-  const res = await api.get<MenuDto[]>('/admin/menu', { params: { accessRole: userType } });
+export async function getSidebarMenus(): Promise<SidebarMenuItem[]> {
+  const res = await api.get<MenuDto[]>('/common/menus');
   return convertFlatToTree(res.data);
 }
 

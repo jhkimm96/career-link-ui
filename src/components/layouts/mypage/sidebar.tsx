@@ -3,21 +3,14 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import SidebarItem from '@/components/layouts/mypage/sidebarItem';
-import {
-  getSidebarMenus,
-  SidebarMenuItem,
-  UserType,
-} from '@/components/layouts/mypage/sidebarMenus';
+import { getSidebarMenus, SidebarMenuItem } from '@/components/layouts/mypage/sidebarMenus';
 import { Box, IconButton, List } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MenuIcon from '@mui/icons-material/Menu';
-import { useAuth } from '@/libs/authContext';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { userType } = useAuth();
-  const user = userType as UserType;
 
   const [menus, setMenus] = useState<SidebarMenuItem[]>([]);
   const [open, setOpen] = useState(true);
@@ -28,10 +21,10 @@ export default function Sidebar() {
 
   useEffect(() => {
     (async () => {
-      const treeMenus = await getSidebarMenus(user);
+      const treeMenus = await getSidebarMenus();
       setMenus(treeMenus);
     })();
-  }, [user]);
+  });
 
   return (
     <Box
