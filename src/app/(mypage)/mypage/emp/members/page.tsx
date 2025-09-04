@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
@@ -21,6 +22,7 @@ import {
   type GridPaginationModel,
   type GridRowId,
   type GridSortModel,
+  type GridRowSelectionModel,
   useGridApiRef,
 } from '@mui/x-data-grid';
 import SearchIcon from '@mui/icons-material/Search';
@@ -56,6 +58,11 @@ export default function EmployerMembersPage() {
 
   //선택 개수
   const [selectedCount, setSelectedCount] = useState(0);
+  // 멀티select
+  const [selectionModel, setSelectionModel] = useState<GridRowSelectionModel>({
+    type: 'include',
+    ids: new Set<GridRowId>(),
+  });
 
   //목록 상태
   const [rows, setRows] = useState<EmployerMember[]>([]);
@@ -155,7 +162,7 @@ export default function EmployerMembersPage() {
               disabled={params.row.isApproved === 'Y'}
               disableElevation
               sx={{
-                minWidth: 88,
+                minWidth: 80,
                 px: 1.25,
                 py: 0.25,
                 fontSize: 12,
@@ -182,19 +189,17 @@ export default function EmployerMembersPage() {
       });
 
       const list: EmployerMember[] = (res.data?.content ?? res.data ?? []).map((r: any) => ({
-        employerUserId: String(r.id ?? r.employerUserId),
+        employerUserId: r.id ?? r.employerUserId,
         userName: r.userName,
         employerLoginId: r.employerLoginId,
         email: r.email,
         phoneNumber: r.phoneNumber,
-        isApproved: String(r.isApproved).toUpperCase() === 'Y' ? 'Y' : 'N',
+        isApproved: r.isApproved === 'Y' ? 'Y' : 'N',
         approvedAt: String(r.approvedAt),
       }));
 
       setRows(list);
-      setRowCount(
-        Number(res.data?.pagination?.totalElements ?? res.data?.totalElements ?? list.length)
-      );
+      setRowCount(Number(res.pagination?.totalElements ?? list.length));
       if (res.message) notifySuccess(setSnackbar, res.message);
     } catch (e: any) {
       notifyError(setSnackbar, e.message ?? '목록 조회 중 오류가 발생했습니다.');
@@ -207,7 +212,7 @@ export default function EmployerMembersPage() {
     void fetchMembers();
   }, [pagination, sortModel]);
 
-  // ===== 승인 처리 =====
+  // ===== 승인 처리 (단건) =====
   const handleApprove = async (row: EmployerMember) => {
     if (row.isApproved === 'Y') return;
 
@@ -228,6 +233,33 @@ export default function EmployerMembersPage() {
       );
     } catch (e: any) {
       notifyError(setSnackbar, e.message ?? '승인 처리 중 오류가 발생했습니다.');
+    }
+  };
+
+  // ===== 승인 처리 (다건) =====
+  const handleApproveBulk = async () => {
+    if (selectionModel.ids.size === 0) {
+      notifyError(setSnackbar, '선택된 회원이 없습니다.');
+      return;
+    }
+
+    const ok = await confirm({
+      title: '승인 처리',
+      message: `승인 후 취소할 수 없습니다. 회원 [${selectionModel.ids.size}] 명을 일괄 승인하시겠습니까?`,
+      confirmText: '승인',
+      cancelText: '취소',
+    });
+    if (!ok) return;
+
+    const ids: string[] = Array.from(selectionModel.ids).map(String);
+
+    try {
+      const res = await api.post('/emp/members/approve-bulk', ids);
+      const updated = res.data;
+      notifySuccess(setSnackbar, `${updated}건 승인되었습니다.`);
+      await fetchMembers();
+    } catch (e: any) {
+      notifyError(setSnackbar, e.message ?? '일괄 승인 중 오류 발생');
     }
   };
 
@@ -283,6 +315,14 @@ export default function EmployerMembersPage() {
             </Typography>
             <Chip size="small" variant="outlined" label={`${rowCount}건`} />
           </Stack>
+          <Button
+            variant="contained"
+            size="small"
+            disabled={selectedCount === 0}
+            onClick={handleApproveBulk}
+          >
+            일괄승인
+          </Button>
         </Stack>
 
         <DataGrid
@@ -293,9 +333,12 @@ export default function EmployerMembersPage() {
           loading={loading}
           checkboxSelection
           disableRowSelectionOnClick
-          onRowSelectionModelChange={ids =>
-            setSelectedCount((ids as unknown as GridRowId[]).length)
-          }
+          rowSelectionModel={selectionModel}
+          onRowSelectionModelChange={model => {
+            setSelectionModel(model);
+            setSelectedCount(model.ids.size);
+          }}
+          isRowSelectable={params => params.row.isApproved !== 'Y'}
           paginationMode="server"
           sortingMode="server"
           filterMode="server"
