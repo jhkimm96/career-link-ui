@@ -17,6 +17,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import api from '@/api/axios';
 import { useAuth } from '@/libs/authContext';
+import { jwtDecode } from 'jwt-decode';
 import PagesSectionLayout from '@/components/layouts/pagesSectionLayout';
 import Image from 'next/image';
 import GoogleIconButton from '@/components/googleLoginIcon';
@@ -31,6 +32,8 @@ interface LoginResponse {
   role: string;
 }
 
+type JwtPayload = { role?: string };
+
 const LoginPage: React.FC = () => {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
@@ -42,7 +45,17 @@ const LoginPage: React.FC = () => {
   }>({ open: false, message: '', severity: 'info' });
   const router = useRouter();
 
-  const { isLoggedIn, setIsLoggedIn, setRemainingTime } = useAuth();
+  const { isLoggedIn, setIsLoggedIn, setRemainingTime, setRole } = useAuth();
+
+  const tokenDecodeToRole = (token: string | null) => {
+    if (!token) return null;
+    try {
+      const { role } = jwtDecode<JwtPayload>(token);
+      return role || null;
+    } catch {
+      return null;
+    }
+  };
 
   const handleClose = () => {
     closeSnackbar(setSnackbar);
@@ -58,10 +71,10 @@ const LoginPage: React.FC = () => {
       localStorage.setItem('accessToken', res.data.accessToken);
       const expiresAt = Date.now() + res.data.accessTokenExpiresAt;
       localStorage.setItem('accessTokenExpiresAt', expiresAt.toString());
-      localStorage.setItem('role', res.data.role);
 
       setIsLoggedIn(true);
       setRemainingTime(Math.floor(expiresAt / 1000));
+      setRole(tokenDecodeToRole(res.data.accessToken));
       notifySuccess(setSnackbar, '로그인되었습니다.');
       router.push('/main');
       return res.data;
