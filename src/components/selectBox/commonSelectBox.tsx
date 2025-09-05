@@ -1,16 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import {
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
-  CircularProgress,
-} from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import api from '@/api/axios';
-
 type CommonCode = {
   code: string;
   codeName: string;
@@ -38,28 +30,20 @@ export default function CommonSelectBox({
   size = 'small',
 }: CommonSelectBoxProps) {
   const [options, setOptions] = useState<CommonCode[]>([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchCodes = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get('/admin/getCommonCodes', {
-          params: { groupCode },
-        });
-        setOptions(res.data ?? []);
-      } catch (err) {
-        console.error(`공통코드(${groupCode}) 조회 실패`, err);
-      } finally {
-        setLoading(false);
-      }
+      const res = await api.get('/common/getCommonCodes', {
+        params: { groupCode },
+      });
+      setOptions(res.data ?? []);
     };
 
     fetchCodes();
   }, [groupCode]);
 
   return (
-    <FormControl fullWidth={fullWidth} size={size} disabled={disabled || loading}>
+    <FormControl fullWidth={fullWidth} size={size} disabled={disabled}>
       {label && <InputLabel>{label}</InputLabel>}
       <Select
         value={value}
@@ -80,7 +64,6 @@ export default function CommonSelectBox({
           </MenuItem>
         ))}
       </Select>
-      {loading && <CircularProgress size={20} sx={{ position: 'absolute', top: 10, right: 10 }} />}
     </FormControl>
   );
 }
