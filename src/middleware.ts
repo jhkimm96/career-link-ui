@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('accessToken')?.value;
   const { pathname } = request.nextUrl;
 
-  const protectedPaths = ['/admin', '/applicant', '/employer'];
+  const protectedPaths = ['/admin', '/applicant', '/emp'];
 
   if (protectedPaths.some(path => pathname.startsWith(path))) {
     if (!token) {
@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
       if (
         (pathname.startsWith('/admin') && role !== 'ADMIN') ||
         (pathname.startsWith('/applicant') && role !== 'USER') ||
-        (pathname.startsWith('/employer') && role !== 'EMP')
+        (pathname.startsWith('/emp') && role !== 'EMP')
       ) {
         return NextResponse.redirect(new URL('/403', request.url));
       }
@@ -30,5 +30,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin', '/admin/:path*', '/applicant/:path*', '/employer/:path*'],
+  matcher: ['/admin', '/admin/:path*', '/applicant/:path*', '/emp/:path*'],
 };
