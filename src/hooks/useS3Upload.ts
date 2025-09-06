@@ -1,6 +1,10 @@
 import { useState } from 'react';
 
-export type S3UploadType = 'PROFILE_IMAGE' | 'COMPANY_LOGO' | 'BUSINESS_CERTIFICATE';
+export type S3UploadType =
+  | 'PROFILE_IMAGE'
+  | 'COMPANY_LOGO'
+  | 'BUSINESS_CERTIFICATE'
+  | 'JOB_POSTING';
 
 interface UseS3UploadOptions {
   uploadType: S3UploadType;

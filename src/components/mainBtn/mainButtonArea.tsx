@@ -38,6 +38,7 @@ interface MainButtonAreaProps {
   actions?: ActionButton[];
   saveAction?: React.MouseEventHandler<HTMLButtonElement>;
   saveLabel?: string;
+  disabled?: boolean;
 }
 
 const MainButtonArea: React.FC<MainButtonAreaProps> = ({
@@ -53,6 +54,7 @@ const MainButtonArea: React.FC<MainButtonAreaProps> = ({
   actions = [],
   saveAction,
   saveLabel = '저장',
+  disabled = true,
 }) => {
   // 버튼 그룹 구성
   const buttons: ActionButton[] = [];
@@ -130,6 +132,7 @@ const MainButtonArea: React.FC<MainButtonAreaProps> = ({
                     variant="contained"
                     startIcon={<SaveIcon />}
                     onClick={saveAction}
+                    disabled={disabled}
                     sx={{ textTransform: 'none', borderRadius: 2, boxShadow: 1 }}
                   >
                     {saveLabel}
