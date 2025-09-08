@@ -338,10 +338,10 @@ export default function MenuPage() {
           onChange={handleRoleChange}
           label="미리보기 권한"
         >
-          <MenuItem value="PUBLIC">PUBLIC</MenuItem>
-          <MenuItem value="ADMIN">ADMIN</MenuItem>
-          <MenuItem value="EMP">EMP</MenuItem>
-          <MenuItem value="USER">USER</MenuItem>
+          <MenuItem value="PUBLIC">공개</MenuItem>
+          <MenuItem value="ADMIN">관리자</MenuItem>
+          <MenuItem value="EMP">기업</MenuItem>
+          <MenuItem value="USER">지원자</MenuItem>
         </Select>
       </FormControl>
 

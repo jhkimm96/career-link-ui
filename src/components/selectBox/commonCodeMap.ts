@@ -6,7 +6,7 @@ export default function useCommonCodeMap(groupCode: string) {
 
   useEffect(() => {
     const fetch = async () => {
-      const res = await api.get('/admin/getCommonCodes', {
+      const res = await api.get('/common/getCommonCodes', {
         params: { groupCode },
       });
       const m: Record<string, string> = {};
