@@ -44,11 +44,18 @@ export default function CommonSelectBox({
 
   return (
     <FormControl fullWidth={fullWidth} size={size} disabled={disabled}>
-      {label && <InputLabel>{label}</InputLabel>}
+      {label && <InputLabel shrink={true}>{label}</InputLabel>}
       <Select
         value={value}
         onChange={(e: SelectChangeEvent<string>) => onChange(e.target.value)}
         displayEmpty
+        renderValue={selected => {
+          if (!selected) {
+            return <em>{placeholder ?? '선택'}</em>;
+          }
+          const selectedOption = options.find(opt => opt.code === selected);
+          return selectedOption?.codeName ?? selected;
+        }}
       >
         {placeholder && (
           <MenuItem value="">
