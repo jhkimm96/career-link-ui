@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Card,
@@ -19,6 +19,8 @@ import {
   Menu,
   MenuItem,
   Fab,
+  Avatar,
+  Tooltip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
@@ -33,6 +35,7 @@ interface JobPosting {
   jobId: string;
   title: string;
   companyName: string;
+  companyLogoUrl?: string;
   location: string;
   employmentType?: string;
   experience?: string;
@@ -72,8 +75,10 @@ type JobFieldNode = {
 };
 
 export default function JobPostingPage() {
-  const { role } = useAuth();
+  const { role, isLoggedIn } = useAuth();
   const isEmp = role === 'EMP';
+  const router = useRouter();
+
   const [keyword, setKeyword] = useState('');
   const [showFilter, setShowFilter] = useState(false);
 
@@ -162,7 +167,7 @@ export default function JobPostingPage() {
     const roots: JobFieldNode[] = [];
 
     for (const c of codes) {
-      map.set(c.code, { code: c.code, codeName: c.codeName, sortOrder: c.sortOrder, children: [] }); // ✅ CHANGED
+      map.set(c.code, { code: c.code, codeName: c.codeName, sortOrder: c.sortOrder, children: [] });
     }
 
     for (const c of codes) {
@@ -210,6 +215,7 @@ export default function JobPostingPage() {
         jobId: r.jobId ?? r.id,
         title: r.title,
         companyName: r.companyName ?? r.employerName,
+        companyLogoUrl: r.companyLogoUrl ?? r.logoUrl ?? r.employerLogoUrl ?? undefined,
         location: r.location ?? r.locationCode ?? '',
         employmentType: r.employmentType ?? r.employmentTypeCode ?? '',
         experience: r.experience ?? r.careerLevel ?? r.careerLevelCode ?? '',
@@ -601,24 +607,56 @@ export default function JobPostingPage() {
                   display: 'flex',
                   flexDirection: 'column',
                   borderRadius: 3,
-                  boxShadow: 3,
+                  border: '1px solid #ddd',
+                  boxShadow: '4px 4px 4px rgba(0,0,0,0.2)',
                 }}
               >
                 <CardHeader
+                  avatar={
+                    <Avatar
+                      alt={row.companyName}
+                      src={row.companyLogoUrl}
+                      variant="rounded"
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: 'grey.100',
+                        fontSize: 14,
+                        fontWeight: 700,
+                      }}
+                      imgProps={{ loading: 'lazy' }}
+                    >
+                      row.companyName
+                    </Avatar>
+                  }
                   title={
-                    <Typography variant="h6" noWrap title={row.title}>
-                      {row.title}
-                    </Typography>
+                    <Tooltip title={row.title} arrow disableInteractive>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          wordBreak: 'break-word',
+                          lineHeight: 1.25,
+                        }}
+                      >
+                        {row.title}
+                      </Typography>
+                    </Tooltip>
                   }
                   subheader={row.companyName}
                   action={
-                    <Button
-                      size="small"
-                      onClick={() => toggleBookmark(row.jobId)}
-                      sx={{ minWidth: 'auto' }}
-                    >
-                      {isBookmarked ? <BookmarkIcon color="primary" /> : <BookmarkBorderIcon />}
-                    </Button>
+                    isLoggedIn && (
+                      <Button
+                        size="small"
+                        onClick={() => toggleBookmark(row.jobId)}
+                        sx={{ minWidth: 'auto' }}
+                      >
+                        {isBookmarked ? <BookmarkIcon color="primary" /> : <BookmarkBorderIcon />}
+                      </Button>
+                    )
                   }
                 />
                 <Divider />
@@ -628,6 +666,7 @@ export default function JobPostingPage() {
                       {row.location && (
                         <Chip
                           size="small"
+                          variant="outlined"
                           label={labelOfCode(filters?.locations, row.location) ?? row.location}
                         />
                       )}
@@ -662,6 +701,7 @@ export default function JobPostingPage() {
                       {row.salary && (
                         <Chip
                           size="small"
+                          variant="outlined"
                           label={labelOfCode(filters?.salary, row.salary) ?? row.salary}
                         />
                       )}
@@ -669,26 +709,24 @@ export default function JobPostingPage() {
                         <Chip key={t} label={t} size="small" variant="outlined" />
                       ))}
                     </Stack>
-                    <Stack direction="row" spacing={2} flexWrap="wrap">
-                      <Typography variant="body2" color="text.secondary">
-                        게시일: {fmtDate(row.postedAt)}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: isOpenEnded ? 'success.main' : 'text.secondary' }}
-                      >
-                        마감: {isOpenEnded ? '상시모집' : fmtDate(row.deadline)}
-                      </Typography>
-                    </Stack>
                   </Stack>
                 </CardContent>
                 <Divider />
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
+                  <Stack direction="row" spacing={2} flexWrap="wrap">
+                    <Typography
+                      variant="body2"
+                      sx={{ color: isOpenEnded ? 'success.main' : 'text.secondary' }}
+                    >
+                      마감: {isOpenEnded ? '상시모집' : fmtDate(row.deadline)}
+                    </Typography>
+                  </Stack>
                   <Button
                     size="small"
                     variant="contained"
-                    component={Link}
-                    href={`/jobs/${row.jobId}`}
+                    onClick={() => {
+                      router.push(`/job-postings/detail?id=${row.jobId}`);
+                    }}
                     disableElevation
                   >
                     상세보기
@@ -717,8 +755,9 @@ export default function JobPostingPage() {
         <Fab
           color="primary"
           aria-label="공고등록"
-          component={Link}
-          href="/job-postings/form"
+          onClick={() => {
+            router.push('/job-postings/form');
+          }}
           sx={{ position: 'fixed', right: 24, bottom: 80, zIndex: 1500 }}
         >
           <AddIcon />

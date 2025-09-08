@@ -179,7 +179,7 @@ export default function JobPostingCreateForm() {
     };
 
     try {
-      await api.post('/job/job-posting', payload);
+      await api.post('/job/job-posting/new', payload);
 
       notifySuccess(setSnackbar, '공고등록이 완료되었습니다.');
     } catch (err: any) {
