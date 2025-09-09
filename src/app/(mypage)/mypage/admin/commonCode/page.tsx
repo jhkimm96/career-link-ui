@@ -668,11 +668,10 @@ export default function Page() {
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
           alignItems: 'stretch',
-          height: 600,
         }}
       >
         {/* ===== 상위 그리드 ===== */}
-        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 600 }}>
           <Stack
             direction="row"
             alignItems="center"
@@ -735,7 +734,7 @@ export default function Page() {
         </Box>
 
         {/* ===== 하위 그리드 ===== */}
-        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 600 }}>
           <Stack
             direction="row"
             alignItems="center"
