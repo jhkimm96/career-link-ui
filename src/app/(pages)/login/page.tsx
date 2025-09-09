@@ -45,7 +45,7 @@ const LoginPage: React.FC = () => {
   }>({ open: false, message: '', severity: 'info' });
   const router = useRouter();
 
-  const { isLoggedIn, setIsLoggedIn, setRemainingTime, setRole } = useAuth();
+  const { signIn } = useAuth();
 
   const tokenDecodeToRole = (token: string | null) => {
     if (!token) return null;
@@ -72,13 +72,10 @@ const LoginPage: React.FC = () => {
       const expiresAt = Date.now() + res.data.accessTokenExpiresAt;
       localStorage.setItem('accessTokenExpiresAt', expiresAt.toString());
 
-      setIsLoggedIn(true);
-      setRemainingTime(Math.floor(expiresAt / 1000));
-      setRole(tokenDecodeToRole(res.data.accessToken));
+      signIn(res.data.accessToken, res.data.accessTokenExpiresAt);
       notifySuccess(setSnackbar, '로그인되었습니다.');
       router.push('/main');
       return res.data;
-      // router.refresh();
     } catch (err: any) {
       notifyError(setSnackbar, err.message);
     }

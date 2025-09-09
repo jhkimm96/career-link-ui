@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
-type JwtPayload = { role?: string; exp?: number; [k: string]: any };
+type JwtPayload = { role?: string; exp?: number; employerId?: string; [k: string]: any };
 
 interface AuthContextType {
   isLoggedIn: boolean;
@@ -12,6 +12,10 @@ interface AuthContextType {
   setRemainingTime: React.Dispatch<React.SetStateAction<number>>;
   role: string | null;
   setRole: React.Dispatch<React.SetStateAction<string | null>>;
+  employerId: string | null;
+  setEmployerId: React.Dispatch<React.SetStateAction<string | null>>;
+  signIn: (accessToken: string, ttlMs: number) => void;
+  signOut?: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,36 +24,54 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [remainingTime, setRemainingTime] = useState(0);
   const [role, setRole] = useState<string | null>(null);
+  const [employerId, setEmployerId] = useState<string | null>(null);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
 
-  // 토큰에서 role 정보 가져오기
-  const extractRole = (token: string | null) => {
-    if (!token) return null;
+  const parseClaims = (token: string) => {
     try {
       const decoded = jwtDecode<JwtPayload>(token);
-      const raw = (decoded.role ?? '').toString();
-      return raw || null;
+      const r = decoded.role ? String(decoded.role) : null;
+      const emp = decoded.employerId != null ? String(decoded.employerId) : null;
+      const exp = decoded.exp ? Number(decoded.exp) : null;
+      return { role: r, employerId: emp, exp };
     } catch {
-      return null;
+      return { role: null, employerId: null, exp: null };
     }
+  };
+
+  const signIn = (accessToken: string, ttlMs: number) => {
+    const expiresAtMs = Date.now() + ttlMs;
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('accessTokenExpiresAt', String(expiresAtMs));
+
+    const { role: r, employerId: emp } = parseClaims(accessToken);
+    setIsLoggedIn(true);
+    setRole(r);
+    setEmployerId(emp);
+    const remainSec = Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000));
+    setRemainingTime(remainSec);
   };
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const expiresAt = localStorage.getItem('accessTokenExpiresAt');
 
-    setIsLoggedIn(!!token);
-    setRole(extractRole(token));
+    if (token) {
+      const { role: r, employerId: emp } = parseClaims(token);
+      setRole(r);
+      setEmployerId(emp);
+      setIsLoggedIn(true);
+    } else {
+      setRole(null);
+      setEmployerId(null);
+      setIsLoggedIn(false);
+    }
 
     if (token && expiresAt) {
-      try {
-        const now = Date.now();
-        const remaining = Math.floor((+expiresAt - now) / 1000);
-        setRemainingTime(remaining > 0 ? remaining : 0);
-        console.log('토큰 유효시간 remaining :: ' + remaining);
-      } catch {
-        setRemainingTime(0);
-      }
+      const remainSec = Math.max(0, Math.floor((+expiresAt - Date.now()) / 1000));
+      setRemainingTime(remainSec);
+    } else {
+      setRemainingTime(0);
     }
 
     setIsAuthInitialized(true);
@@ -57,7 +79,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ isLoggedIn, setIsLoggedIn, remainingTime, setRemainingTime, role, setRole }}
+      value={{
+        isLoggedIn,
+        setIsLoggedIn,
+        remainingTime,
+        setRemainingTime,
+        role,
+        setRole,
+        employerId,
+        setEmployerId,
+        signIn,
+      }}
     >
       {isAuthInitialized ? children : null}
     </AuthContext.Provider>
