@@ -24,6 +24,8 @@ import {
 } from '@mui/material';
 import api from '@/api/axios';
 import { CommonCodesApi, CommonCode } from '@/api/commonCodes';
+import MainButtonArea from '@/components/mainBtn/mainButtonArea';
+import { useAuth } from '@/libs/authContext';
 
 type JobPostingResponse = {
   jobPostingId: number;
@@ -58,9 +60,11 @@ const formatDate = (value?: string | null) => {
 };
 
 export default function JobPostingDetailPage() {
+  const { role, employerId } = useAuth();
+
   const searchParams = useSearchParams();
   const router = useRouter();
-  const id = searchParams.get('id');
+  const id = searchParams.get('id'); //job_posting_id
 
   const [detail, setDetail] = useState<JobPostingResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -186,6 +190,9 @@ export default function JobPostingDetailPage() {
     }
   };
 
+  const canSeeEmployerActions =
+    role === 'EMP' && !!employerId && !!detail && String(employerId) === String(detail.employerId);
+
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, md: 3 }, py: { xs: 2, md: 4 } }}>
       <Box
@@ -219,6 +226,14 @@ export default function JobPostingDetailPage() {
           <MainContent loading={loading} err={err} detail={detail} />
         </Box>
       </Box>
+
+      {canSeeEmployerActions && (
+        <MainButtonArea
+          actions={[{ label: '이전', onClick: () => router.push('/job-postings') }]}
+          saveAction={() => router.push(`/job-postings/edit?id=${detail?.jobPostingId}`)}
+          saveLabel={'수정'}
+        />
+      )}
 
       <Dialog open={applyOpen} onClose={() => setApplyOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>이력서 선택</DialogTitle>

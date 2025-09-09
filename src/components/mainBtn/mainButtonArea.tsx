@@ -54,7 +54,7 @@ const MainButtonArea: React.FC<MainButtonAreaProps> = ({
   actions = [],
   saveAction,
   saveLabel = '저장',
-  disabled = true,
+  disabled = false,
 }) => {
   // 버튼 그룹 구성
   const buttons: ActionButton[] = [];

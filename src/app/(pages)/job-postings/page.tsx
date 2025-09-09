@@ -21,6 +21,8 @@ import {
   Fab,
   Avatar,
   Tooltip,
+  ListItemIcon,
+  Checkbox,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
@@ -71,7 +73,9 @@ type JobFieldNode = {
   code: string;
   codeName: string;
   sortOrder?: number;
+  parentCode?: string | null;
   children: JobFieldNode[];
+  isLeaf?: boolean;
 };
 
 export default function JobPostingPage() {
@@ -82,12 +86,12 @@ export default function JobPostingPage() {
   const [keyword, setKeyword] = useState('');
   const [showFilter, setShowFilter] = useState(false);
 
-  const [jobField, setJobField] = useState<string>('');
-  const [location, setLocation] = useState<string>('');
-  const [exp, setExp] = useState('');
-  const [edu, setEdu] = useState('');
-  const [empType, setEmpType] = useState('');
-  const [sal, setSal] = useState('');
+  const [jobFields, setJobFields] = useState<string[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
+  const [exps, setExps] = useState<string[]>([]);
+  const [edus, setEdus] = useState<string[]>([]);
+  const [empTypes, setEmpTypes] = useState<string[]>([]);
+  const [sals, setSals] = useState<string[]>([]);
 
   const [rows, setRows] = useState<JobPosting[]>([]);
   const [rowCount, setRowCount] = useState(0);
@@ -166,10 +170,18 @@ export default function JobPostingPage() {
     const map = new Map<string, JobFieldNode>();
     const roots: JobFieldNode[] = [];
 
+    // 모든 노드 기본 생성
     for (const c of codes) {
-      map.set(c.code, { code: c.code, codeName: c.codeName, sortOrder: c.sortOrder, children: [] });
+      map.set(c.code, {
+        code: c.code,
+        codeName: c.codeName,
+        sortOrder: c.sortOrder,
+        parentCode: c.parentCode ?? null,
+        children: [],
+      });
     }
 
+    // 부모-자식 연결
     for (const c of codes) {
       const node = map.get(c.code)!;
       if (!c.parentCode) {
@@ -181,6 +193,7 @@ export default function JobPostingPage() {
       }
     }
 
+    // 정렬
     const sortTree = (nodes: JobFieldNode[]) => {
       nodes.sort(
         (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.codeName.localeCompare(b.codeName)
@@ -188,27 +201,61 @@ export default function JobPostingPage() {
       nodes.forEach(n => sortTree(n.children));
     };
     sortTree(roots);
+
+    const markLeaf = (nodes: JobFieldNode[]) => {
+      nodes.forEach(n => {
+        n.isLeaf = n.children.length === 0;
+        if (n.children.length) markLeaf(n.children);
+      });
+    };
+    markLeaf(roots);
+
     return roots;
   };
 
   const jobFieldTree = useMemo(() => buildJobFieldTree(filters?.jobFields), [filters]);
 
+  const toggleIn = (arr: string[], v: string) =>
+    arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v];
+
+  const labelForMulti = (opts: Option[], selected: string[], prefix: string) => {
+    if (selected.length === 0) return `${prefix} • 전체`;
+    const names = selected.map(c => opts.find(o => o.code === c)?.name).filter(Boolean) as string[];
+    if (names.length === 1) return `${prefix} • ${names[0]}`;
+    return `${prefix} • ${names[0]} 외 ${names.length - 1}`;
+  };
+
+  const jobLabel = labelForMulti(jobFieldOptions, jobFields, '직군');
+  const locLabel = labelForMulti(locOptions, locations, '지역');
+  const expLabel = labelForMulti(expOptions, exps, '경력');
+  const eduLabel = labelForMulti(eduOptions, edus, '학력');
+  const empTypeLabel = labelForMulti(empTypeOptions, empTypes, '고용형태');
+  const salLabel = labelForMulti(salOptions, sals, '연봉');
+
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/job/jobList', {
-        params: {
-          page: page - 1,
-          size: pageSize,
-          keyword: keyword || undefined,
-          jobField: jobField || undefined,
-          location: location || undefined,
-          exp: exp || undefined,
-          edu: edu || undefined,
-          empType: empType || undefined,
-          sal: sal || undefined,
-        },
-      });
+      const p = new URLSearchParams();
+
+      p.set('page', String(page - 1));
+      p.set('size', String(pageSize));
+      if (keyword && keyword.trim()) p.set('keyword', keyword.trim());
+
+      const appendAll = (key: string, arr: string[]) => {
+        (arr ?? []).forEach(v => {
+          const vv = (v ?? '').trim();
+          if (vv) p.append(key, vv);
+        });
+      };
+
+      appendAll('jobField', jobFields);
+      appendAll('location', locations);
+      appendAll('exp', exps);
+      appendAll('edu', edus);
+      appendAll('empType', empTypes);
+      appendAll('sal', sals);
+
+      const res = await api.get('/job/jobList', { params: p, paramsSerializer: undefined });
 
       const data = res.data;
       const list: JobPosting[] = (data?.content ?? data ?? []).map((r: any) => ({
@@ -237,7 +284,7 @@ export default function JobPostingPage() {
 
   useEffect(() => {
     void fetchJobs();
-  }, [page]); // 페이지 변경 시 재조회
+  }, [page]);
 
   const handleSearch = () => {
     setPage(1);
@@ -254,13 +301,6 @@ export default function JobPostingPage() {
   const hasOpenMenu = Boolean(
     anchorLocation || anchorJob || anchorExp || anchorEdu || anchorEmpType || anchorSal
   );
-
-  const jobLabel = jobField ? `직군 • ${labelOf(jobFieldOptions, jobField)}` : '직군 • 전체';
-  const locLabel = location ? `지역 • ${labelOf(locOptions, location)}` : '지역 • 전체';
-  const expLabel = exp ? `경력 • ${labelOf(expOptions, exp)}` : '경력 • 전체';
-  const eduLabel = edu ? `학력 • ${labelOf(eduOptions, edu)}` : '학력 • 전체';
-  const empTypeLabel = empType ? `형태 • ${labelOf(empTypeOptions, empType)}` : '고용형태 • 전체';
-  const salLabel = sal ? `연봉 • ${labelOf(salOptions, sal)}` : '연봉 • 전체';
 
   const skeletons = Array.from({ length: pageSize }).map((_, i) => (
     <Card key={`s-${i}`} sx={{ borderRadius: 3, boxShadow: 3, height: '100%' }}>
@@ -340,28 +380,43 @@ export default function JobPostingPage() {
                   지역선택
                 </Typography>
                 <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
-                  <MenuItem
-                    selected={!location}
-                    onClick={() => {
-                      setLocation('');
-                      setAnchorLocation(null);
-                    }}
-                  >
+                  <MenuItem onClick={() => setLocations([])}>
+                    <ListItemIcon>
+                      <Checkbox edge="start" checked={locations.length === 0} />
+                    </ListItemIcon>
                     전체
                   </MenuItem>
-                  {locOptions.map(o => (
-                    <MenuItem
-                      key={o.code}
-                      selected={location === o.code}
-                      onClick={() => {
-                        setLocation(o.code);
-                        setAnchorLocation(null);
-                      }}
-                    >
-                      {o.name}
-                    </MenuItem>
-                  ))}
+                  {locOptions.map(o => {
+                    const checked = locations.includes(o.code);
+                    return (
+                      <MenuItem
+                        key={o.code}
+                        onClick={() => setLocations(prev => toggleIn(prev, o.code))}
+                      >
+                        <ListItemIcon>
+                          <Checkbox edge="start" checked={checked} />
+                        </ListItemIcon>
+                        {o.name}
+                      </MenuItem>
+                    );
+                  })}
                 </Box>
+                <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
+                  <Button size="small" onClick={() => setLocations([])}>
+                    초기화
+                  </Button>
+                  <Box flex={1} />
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => {
+                      setAnchorLocation(null);
+                      setPage(1);
+                    }}
+                  >
+                    적용
+                  </Button>
+                </Stack>
               </Box>
             </Menu>
 
@@ -378,48 +433,70 @@ export default function JobPostingPage() {
                   직군 선택
                 </Typography>
                 <Box sx={{ maxHeight: 360, overflowY: 'auto' }}>
-                  <MenuItem
-                    selected={!jobField}
-                    onClick={() => {
-                      setJobField('');
-                      setAnchorJob(null);
-                    }}
-                  >
+                  <MenuItem onClick={() => setJobFields([])}>
+                    <ListItemIcon>
+                      <Checkbox edge="start" checked={jobFields.length === 0} />
+                    </ListItemIcon>
                     전체
                   </MenuItem>
 
-                  {jobFieldTree.map(parent => (
-                    <Box key={parent.code} sx={{ px: 0.5 }}>
-                      <MenuItem
-                        disabled={parent.children.length > 0}
-                        selected={jobField === parent.code}
-                        onClick={() => {
-                          if (parent.children.length === 0) {
-                            setJobField(parent.code);
-                            setAnchorJob(null);
-                          }
-                        }}
-                        sx={{ fontWeight: 600, opacity: 1 }}
-                      >
-                        {parent.codeName}
-                      </MenuItem>
-
-                      {parent.children.map(child => (
+                  {jobFieldTree.map(parent => {
+                    if (parent.isLeaf) {
+                      const checked = jobFields.includes(parent.code);
+                      return (
                         <MenuItem
-                          key={child.code}
-                          sx={{ pl: 3 }}
-                          selected={jobField === child.code}
-                          onClick={() => {
-                            setJobField(child.code);
-                            setAnchorJob(null);
-                          }}
+                          key={parent.code}
+                          onClick={() => setJobFields(prev => toggleIn(prev, parent.code))}
                         >
-                          {child.codeName}
+                          <ListItemIcon>
+                            <Checkbox edge="start" checked={checked} />
+                          </ListItemIcon>
+                          {parent.codeName}
                         </MenuItem>
-                      ))}
-                    </Box>
-                  ))}
+                      );
+                    }
+
+                    return (
+                      <Box key={parent.code} sx={{ px: 0.5 }}>
+                        <MenuItem disabled sx={{ fontWeight: 600 }}>
+                          {parent.codeName}
+                        </MenuItem>
+
+                        {parent.children.map(child => {
+                          const checked = jobFields.includes(child.code);
+                          return (
+                            <MenuItem
+                              key={child.code}
+                              sx={{ pl: 3 }}
+                              onClick={() => setJobFields(prev => toggleIn(prev, child.code))}
+                            >
+                              <ListItemIcon>
+                                <Checkbox edge="start" checked={checked} />
+                              </ListItemIcon>
+                              {child.codeName}
+                            </MenuItem>
+                          );
+                        })}
+                      </Box>
+                    );
+                  })}
                 </Box>
+                <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
+                  <Button size="small" onClick={() => setJobFields([])}>
+                    초기화
+                  </Button>
+                  <Box flex={1} />
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => {
+                      setAnchorJob(null);
+                      setPage(1);
+                    }}
+                  >
+                    적용
+                  </Button>
+                </Stack>
               </Box>
             </Menu>
 
@@ -436,28 +513,43 @@ export default function JobPostingPage() {
                   경력 선택
                 </Typography>
                 <Box sx={{ maxHeight: 260, overflowY: 'auto' }}>
-                  <MenuItem
-                    selected={!exp}
-                    onClick={() => {
-                      setExp('');
-                      setAnchorExp(null);
-                    }}
-                  >
+                  <MenuItem onClick={() => setExps([])}>
+                    <ListItemIcon>
+                      <Checkbox checked={exps.length === 0} />
+                    </ListItemIcon>
                     전체
                   </MenuItem>
-                  {expOptions.map(o => (
-                    <MenuItem
-                      key={o.code}
-                      selected={exp === o.code}
-                      onClick={() => {
-                        setExp(o.code);
-                        setAnchorExp(null);
-                      }}
-                    >
-                      {o.name}
-                    </MenuItem>
-                  ))}
+                  {expOptions.map(o => {
+                    const checked = exps.includes(o.code);
+                    return (
+                      <MenuItem
+                        key={o.code}
+                        onClick={() => setExps(prev => toggleIn(prev, o.code))}
+                      >
+                        <ListItemIcon>
+                          <Checkbox checked={checked} />
+                        </ListItemIcon>
+                        {o.name}
+                      </MenuItem>
+                    );
+                  })}
                 </Box>
+                <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
+                  <Button size="small" onClick={() => setExps([])}>
+                    초기화
+                  </Button>
+                  <Box flex={1} />
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => {
+                      setAnchorExp(null);
+                      setPage(1);
+                    }}
+                  >
+                    적용
+                  </Button>
+                </Stack>
               </Box>
             </Menu>
 
@@ -474,28 +566,43 @@ export default function JobPostingPage() {
                   학력 선택
                 </Typography>
                 <Box sx={{ maxHeight: 260, overflowY: 'auto' }}>
-                  <MenuItem
-                    selected={!edu}
-                    onClick={() => {
-                      setEdu('');
-                      setAnchorEdu(null);
-                    }}
-                  >
+                  <MenuItem onClick={() => setEdus([])}>
+                    <ListItemIcon>
+                      <Checkbox checked={edus.length === 0} />
+                    </ListItemIcon>
                     전체
                   </MenuItem>
-                  {eduOptions.map(o => (
-                    <MenuItem
-                      key={o.code}
-                      selected={edu === o.code}
-                      onClick={() => {
-                        setEdu(o.code);
-                        setAnchorEdu(null);
-                      }}
-                    >
-                      {o.name}
-                    </MenuItem>
-                  ))}
+                  {eduOptions.map(o => {
+                    const checked = edus.includes(o.code);
+                    return (
+                      <MenuItem
+                        key={o.code}
+                        onClick={() => setEdus(prev => toggleIn(prev, o.code))}
+                      >
+                        <ListItemIcon>
+                          <Checkbox checked={checked} />
+                        </ListItemIcon>
+                        {o.name}
+                      </MenuItem>
+                    );
+                  })}
                 </Box>
+                <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
+                  <Button size="small" onClick={() => setEdus([])}>
+                    초기화
+                  </Button>
+                  <Box flex={1} />
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => {
+                      setAnchorEdu(null);
+                      setPage(1);
+                    }}
+                  >
+                    적용
+                  </Button>
+                </Stack>
               </Box>
             </Menu>
 
@@ -512,28 +619,43 @@ export default function JobPostingPage() {
                   고용형태 선택
                 </Typography>
                 <Box sx={{ maxHeight: 260, overflowY: 'auto' }}>
-                  <MenuItem
-                    selected={!empType}
-                    onClick={() => {
-                      setEmpType('');
-                      setAnchorEmpType(null);
-                    }}
-                  >
+                  <MenuItem onClick={() => setEmpTypes([])}>
+                    <ListItemIcon>
+                      <Checkbox checked={empTypes.length === 0} />
+                    </ListItemIcon>
                     전체
                   </MenuItem>
-                  {empTypeOptions.map(o => (
-                    <MenuItem
-                      key={o.code}
-                      selected={empType === o.code}
-                      onClick={() => {
-                        setEmpType(o.code);
-                        setAnchorEmpType(null);
-                      }}
-                    >
-                      {o.name}
-                    </MenuItem>
-                  ))}
+                  {empTypeOptions.map(o => {
+                    const checked = empTypes.includes(o.code);
+                    return (
+                      <MenuItem
+                        key={o.code}
+                        onClick={() => setEmpTypes(prev => toggleIn(prev, o.code))}
+                      >
+                        <ListItemIcon>
+                          <Checkbox checked={checked} />
+                        </ListItemIcon>
+                        {o.name}
+                      </MenuItem>
+                    );
+                  })}
                 </Box>
+                <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
+                  <Button size="small" onClick={() => setEmpTypes([])}>
+                    초기화
+                  </Button>
+                  <Box flex={1} />
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => {
+                      setAnchorEmpType(null);
+                      setPage(1);
+                    }}
+                  >
+                    적용
+                  </Button>
+                </Stack>
               </Box>
             </Menu>
 
@@ -550,28 +672,43 @@ export default function JobPostingPage() {
                   연봉 선택
                 </Typography>
                 <Box sx={{ maxHeight: 260, overflowY: 'auto' }}>
-                  <MenuItem
-                    selected={!sal}
-                    onClick={() => {
-                      setSal('');
-                      setAnchorSal(null);
-                    }}
-                  >
+                  <MenuItem onClick={() => setSals([])}>
+                    <ListItemIcon>
+                      <Checkbox checked={sals.length === 0} />
+                    </ListItemIcon>
                     전체
                   </MenuItem>
-                  {salOptions.map(o => (
-                    <MenuItem
-                      key={o.code}
-                      selected={sal === o.code}
-                      onClick={() => {
-                        setSal(o.code);
-                        setAnchorSal(null);
-                      }}
-                    >
-                      {o.name}
-                    </MenuItem>
-                  ))}
+                  {salOptions.map(o => {
+                    const checked = sals.includes(o.code);
+                    return (
+                      <MenuItem
+                        key={o.code}
+                        onClick={() => setSals(prev => toggleIn(prev, o.code))}
+                      >
+                        <ListItemIcon>
+                          <Checkbox checked={checked} />
+                        </ListItemIcon>
+                        {o.name}
+                      </MenuItem>
+                    );
+                  })}
                 </Box>
+                <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
+                  <Button size="small" onClick={() => setSals([])}>
+                    초기화
+                  </Button>
+                  <Box flex={1} />
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => {
+                      setAnchorSal(null);
+                      setPage(1);
+                    }}
+                  >
+                    적용
+                  </Button>
+                </Stack>
               </Box>
             </Menu>
           </FilterPanel>
