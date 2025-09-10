@@ -435,6 +435,7 @@ export default function MenuPage() {
         <CommonSelectBox
           label="활성여부"
           groupCode="USE_YN"
+          parentCode="YN"
           value={selected?.isActive ?? ''}
           onChange={v => patchSelected({ isActive: v })}
           placeholder="선택"
@@ -444,6 +445,7 @@ export default function MenuPage() {
         <CommonSelectBox
           label="접근권한"
           groupCode="MENU_ROLE"
+          parentCode="ROLE"
           value={selected?.accessRole ?? filterRole}
           onChange={v => patchSelected({ accessRole: v as AccessRole })}
           disabled

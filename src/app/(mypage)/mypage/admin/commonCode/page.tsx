@@ -47,7 +47,7 @@ interface CodeDto {
 
 export default function Page() {
   // ===== 공통맵 =====
-  const useYnMap = useCommonCodeMap('USE_YN');
+  const useYnMap = useCommonCodeMap('USE_YN', 'YN');
 
   // ===== 컬럼 정의 (부모/자식 별도) =====
   const parentCols: GridColDef<CodeDto>[] = useMemo(
@@ -108,6 +108,7 @@ export default function Page() {
         renderEditCell: params => (
           <CommonSelectBox
             groupCode="USE_YN"
+            parentCode="YN"
             value={params.value}
             onChange={v =>
               params.api.setEditCellValue({ id: params.id, field: params.field, value: v })
@@ -178,6 +179,7 @@ export default function Page() {
         renderEditCell: params => (
           <CommonSelectBox
             groupCode="USE_YN"
+            parentCode="YN"
             value={params.value}
             onChange={v =>
               params.api.setEditCellValue({ id: params.id, field: params.field, value: v })

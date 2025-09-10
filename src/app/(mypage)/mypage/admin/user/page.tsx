@@ -1,6 +1,15 @@
 'use client';
 import PageSectionLayout from '@/components/layouts/mypage/pageSectionLayout';
-import { type AlertColor, Box, Button, InputAdornment, TextField } from '@mui/material';
+import {
+  type AlertColor,
+  Box,
+  Button,
+  Chip,
+  InputAdornment,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import {
   DataGrid,
   GridColDef,
@@ -26,8 +35,8 @@ interface UserDto {
 }
 
 export default function UserPage() {
-  const userTypeMap = useCommonCodeMap('USER_TYPE');
-  const userStatusMap = useCommonCodeMap('USER_STATUS');
+  const userTypeMap = useCommonCodeMap('USER_TYPE', 'TYPE');
+  const userStatusMap = useCommonCodeMap('USER_STATUS', 'STATUS');
   const userColumns: GridColDef<UserDto>[] = [
     {
       field: 'userName',
@@ -60,6 +69,7 @@ export default function UserPage() {
       renderEditCell: params => (
         <CommonSelectBox
           groupCode="USER_TYPE"
+          parentCode="TYPE"
           value={params.value}
           onChange={v =>
             params.api.setEditCellValue({ id: params.id, field: params.field, value: v })
@@ -84,6 +94,7 @@ export default function UserPage() {
       renderEditCell: params => (
         <CommonSelectBox
           groupCode="USER_STATUS"
+          parentCode="STATUS"
           value={params.value}
           onChange={v =>
             params.api.setEditCellValue({ id: params.id, field: params.field, value: v })
@@ -143,7 +154,6 @@ export default function UserPage() {
   };
   const handleSaveAll = async () => {
     if (editedRows.size === 0) return;
-
     try {
       const editRows = Array.from(editedRows.values()).map(r => ({
         userPk: r.userPk,
@@ -168,6 +178,7 @@ export default function UserPage() {
           label="권한"
           placeholder="전체"
           groupCode="USER_TYPE"
+          parentCode="TYPE"
           value={role}
           onChange={code => setRole(code)}
           fullWidth={false}
@@ -207,11 +218,17 @@ export default function UserPage() {
     <PageSectionLayout title="사용자관리" actions={headerActions}>
       <Box
         sx={{
-          display: 'grid',
-          alignItems: 'stretch',
-          height: 600,
+          display: 'flex',
+          flexDirection: 'column',
+          height: 500,
         }}
       >
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1, flexShrink: 0 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            사용자
+          </Typography>
+          <Chip size="small" variant="outlined" label={`${usersRowCount}건`} />
+        </Stack>
         <DataGrid
           getRowId={r => r.userPk}
           columns={userColumns}

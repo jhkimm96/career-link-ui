@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import api from '@/api/axios';
+
 type CommonCode = {
   code: string;
   codeName: string;
@@ -10,6 +11,7 @@ type CommonCode = {
 
 type CommonSelectBoxProps = {
   groupCode: string;
+  parentCode?: string;
   value: string;
   onChange: (value: string) => void;
   label?: string;
@@ -21,6 +23,7 @@ type CommonSelectBoxProps = {
 
 export default function CommonSelectBox({
   groupCode,
+  parentCode,
   value,
   onChange,
   label,
@@ -32,19 +35,30 @@ export default function CommonSelectBox({
   const [options, setOptions] = useState<CommonCode[]>([]);
 
   useEffect(() => {
+    if (!groupCode) return;
+
     const fetchCodes = async () => {
-      const res = await api.get('/common/getCommonCodes', {
-        params: { groupCode },
-      });
+      let res;
+      if (parentCode) {
+        // 하위코드 API
+        res = await api.get('/common/children', {
+          params: { groupCode: groupCode, parentCode: parentCode },
+        });
+      } else {
+        // 상위코드 API
+        res = await api.get('/common/parents', {
+          params: { groupCode: groupCode },
+        });
+      }
       setOptions(res.data ?? []);
     };
 
     fetchCodes();
-  }, [groupCode]);
+  }, [groupCode, parentCode]);
 
   return (
     <FormControl fullWidth={fullWidth} size={size} disabled={disabled}>
-      {label && <InputLabel shrink={true}>{label}</InputLabel>}
+      {label && <InputLabel shrink>{label}</InputLabel>}
       <Select
         value={value}
         onChange={(e: SelectChangeEvent<string>) => onChange(e.target.value)}
