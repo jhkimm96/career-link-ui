@@ -4,7 +4,8 @@ export type S3UploadType =
   | 'PROFILE_IMAGE'
   | 'COMPANY_LOGO'
   | 'BUSINESS_CERTIFICATE'
-  | 'JOB_POSTING';
+  | 'JOB_POSTING'
+  | 'NOTICE_FILE';
 
 interface UseS3UploadOptions {
   uploadType: S3UploadType;

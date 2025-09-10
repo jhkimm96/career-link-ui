@@ -36,6 +36,7 @@ export default function AppHeader() {
     { label: 'Service', href: '/services' },
     { label: 'About', href: '/about' },
     { label: 'Notice', href: '/notice' },
+    { label: 'Faq', href: '/faq' },
     {
       label: 'Sample',
       submenu: [
