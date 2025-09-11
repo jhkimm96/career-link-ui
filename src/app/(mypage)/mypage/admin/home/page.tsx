@@ -11,8 +11,7 @@ export default function MyPage() {
       <Tabs value={0} textColor="primary" indicatorColor="primary">
         <Tab label="일자별/월별/년도별 접속자 수" />
         <Tab label="일자별/월별/년도별 등록 공고 수" />
-        <Tab label="일자별/월별/년도별 합격자 수" />
-        <Tab label="성별/연령/지역별 합격자수" />
+        <Tab label="일자별/월별/년도별 지원자 수" />
       </Tabs>
 
       <Typography mt={4}>마이페이지에 오신 것을 환영합니다!</Typography>

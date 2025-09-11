@@ -34,7 +34,7 @@ export default function NoticeEditPage() {
   useEffect(() => {
     const fetchNotice = async () => {
       try {
-        const res = await api.get<NoticeResponse>(`/common/getNotice/${id}`);
+        const res = await api.get<NoticeResponse>(`/notice/getNotice/${id}`);
         const { fileName, ...rest } = res.data;
         setForm(rest as NoticeFormData);
         setOriginalFileName(fileName ?? '');

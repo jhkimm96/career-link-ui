@@ -51,7 +51,7 @@ export default function FaqPage() {
 
   const fetchFaqs = useCallback(async () => {
     try {
-      const res = await api.get('/common/getFaqs', {
+      const res = await api.get('/faq/getFaqs', {
         params: { category },
       });
       setFaqs(res.data ?? []);

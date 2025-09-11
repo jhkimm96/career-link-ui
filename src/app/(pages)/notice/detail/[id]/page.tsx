@@ -44,7 +44,7 @@ export default function NoticeDetailPage() {
   useEffect(() => {
     const fetchNoticeDetail = async () => {
       try {
-        const res = await api.get(`/common/getNotice/${id}`);
+        const res = await api.get(`/notice/getNotice/${id}`);
         setNotice(res.data);
         notifySuccess(setSnackbar, res.message);
       } catch (err: any) {

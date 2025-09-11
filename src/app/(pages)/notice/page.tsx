@@ -53,7 +53,7 @@ export default function CommonNoticePage() {
   //공지사항 조회
   const fetchNotices = useCallback(async () => {
     try {
-      const res = await api.get('/common/getNotices', {
+      const res = await api.get('/notice/getNotices', {
         params: { page: 0, size: 20, noticeType, sort: sortOrder },
       });
       setNotices(res.data);

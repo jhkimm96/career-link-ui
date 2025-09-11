@@ -10,7 +10,7 @@ export default function MyPage() {
       </Typography>
       <Tabs value={0} textColor="primary" indicatorColor="primary">
         <Tab label="공고별 지원자 수" />
-        <Tab label="지원상태별 지원자 수" />
+        <Tab label="기간별 지원자 수" />
       </Tabs>
 
       <Typography mt={4}>마이페이지에 오신 것을 환영합니다!</Typography>
