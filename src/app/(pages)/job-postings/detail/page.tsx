@@ -21,6 +21,7 @@ import {
   Radio,
   ListItemText,
   DialogActions,
+  Tooltip,
 } from '@mui/material';
 import api from '@/api/axios';
 import { CommonCodesApi, CommonCode } from '@/api/commonCodes';
@@ -322,6 +323,7 @@ function MainContent({
   err: string | null;
   detail: JobPostingResponse | null;
 }) {
+  const router = useRouter();
   if (loading) {
     return (
       <Card sx={{ p: 2 }}>
@@ -353,9 +355,25 @@ function MainContent({
           {detail.title}
         </Typography>
 
-        <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-          {detail.companyName}
-        </Typography>
+        <Tooltip title="기업정보 바로가기" arrow>
+          <Typography
+            variant="subtitle1"
+            color="primary"
+            gutterBottom
+            sx={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
+            onClick={() => router.push('/emp/profile')}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                router.push('/emp/profile');
+              }
+            }}
+            role="link"
+            tabIndex={0}
+          >
+            {detail.companyName}
+          </Typography>
+        </Tooltip>
 
         <Divider sx={{ my: 2 }} />
 
@@ -385,6 +403,7 @@ function RightStickyCard({
   deadline: string | null;
   onApply: () => void;
 }) {
+  const router = useRouter();
   return (
     <Card
       sx={{
@@ -409,9 +428,24 @@ function RightStickyCard({
           </>
         ) : (
           <>
-            <Typography variant="h6" gutterBottom>
-              {companyName ?? '회사명'}
-            </Typography>
+            <Tooltip title="기업정보 바로가기" arrow>
+              <Typography
+                variant="h6"
+                gutterBottom
+                color="primary"
+                sx={{ cursor: 'pointer', display: 'inline-flex' }}
+                onClick={() => router.push('/emp/profile')}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    router.push('/emp/profile');
+                  }
+                }}
+                role="link"
+              >
+                {companyName ?? '회사명'}
+              </Typography>
+            </Tooltip>
 
             <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 1 }}>
               {chips.slice(0, 6).map((c, i) => (
