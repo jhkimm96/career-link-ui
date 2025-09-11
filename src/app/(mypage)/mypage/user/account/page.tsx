@@ -10,7 +10,7 @@ export default function MyPage() {
       </Typography>
       <Tabs value={0} textColor="primary" indicatorColor="primary">
         <Tab label="프로필" />
-        <Tab label="선호 채용분야에 따른 TOP10 공고 목록" />
+        <Tab label="TOP10 공고 목록" />
       </Tabs>
 
       <Typography mt={4}>마이페이지에 오신 것을 환영합니다!</Typography>
