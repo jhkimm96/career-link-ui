@@ -58,9 +58,6 @@ interface EmployerInfo {
 }
 
 export default function EmpProfilePage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
   const { previewUrl, selectedFile, setFile } = useS3Upload({ uploadType: 'COMPANY_LOGO' });
 
   const [form, setForm] = useState<EmployerInfo | null>(null);
@@ -107,7 +104,7 @@ export default function EmpProfilePage() {
       }
     };
     fetchEmployerInfo();
-  }, []); // ← employerId 의존성 제거
+  }, []);
 
   const handleChange =
     <K extends keyof EmployerInfo>(key: K) =>
