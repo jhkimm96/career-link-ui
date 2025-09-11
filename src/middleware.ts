@@ -15,9 +15,9 @@ export function middleware(request: NextRequest) {
     try {
       const { role } = jwtDecode(token) as { role: string };
       if (
-        (pathname.startsWith('/admin') && role !== 'ADMIN') ||
-        (pathname.startsWith('/applicant') && role !== 'USER') ||
-        (pathname.startsWith('/emp') && role !== 'EMP')
+        (pathname.startsWith('/mypage/admin') && role !== 'ADMIN') ||
+        (pathname.startsWith('/mypage/user') && role !== 'USER') ||
+        (pathname.startsWith('/mypage/emp') && role !== 'EMP')
       ) {
         return NextResponse.redirect(new URL('/403', request.url));
       }
