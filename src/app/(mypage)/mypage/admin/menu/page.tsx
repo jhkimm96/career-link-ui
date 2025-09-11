@@ -478,6 +478,7 @@ export default function MenuPage() {
         message={snackbar.message}
         severity={snackbar.severity}
         onClose={notifyClose}
+        bottom="10px"
       />
     </PageSectionLayout>
   );

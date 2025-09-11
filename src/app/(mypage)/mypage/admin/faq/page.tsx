@@ -333,6 +333,7 @@ export default function AdminFaqPage() {
           message={snackbar.message}
           severity={snackbar.severity}
           onClose={() => closeSnackbar(setSnackbar)}
+          bottom="10px"
         />
       </Stack>
     </PageSectionLayout>

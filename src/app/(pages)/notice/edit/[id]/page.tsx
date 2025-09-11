@@ -90,6 +90,7 @@ export default function NoticeEditPage() {
           message={snackbar.message}
           severity={snackbar.severity}
           onClose={() => closeSnackbar(setSnackbar)}
+          bottom="10px"
         />
       </Box>
     </PagesSectionLayout>
