@@ -27,7 +27,7 @@ function convertFlatToTree(flat: MenuDto[]): SidebarMenuItem[] {
       id: item.menuId as number,
       label: item.menuName,
       path: item.menuPath,
-      icon: getMenuIcon(item.icon),
+      icon: item.icon ? getMenuIcon(item.icon) : undefined,
       children: [],
     });
   });

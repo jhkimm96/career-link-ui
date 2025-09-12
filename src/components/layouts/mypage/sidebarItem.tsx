@@ -100,6 +100,7 @@ export default function SidebarItem({
       {item.children && (
         <Collapse in={!isCollapsed && open} timeout={{ enter: 500, exit: 300 }} unmountOnExit>
           {item.children.map((child, index) => {
+            const ChildIcon = child.icon;
             const childPath = normalize(child.path);
             const childActive = !!childPath && current === childPath;
 
@@ -117,7 +118,7 @@ export default function SidebarItem({
                       justifyContent: 'center',
                     }}
                   >
-                    {Icon && <Icon fontSize="small" />}
+                    {ChildIcon && <ChildIcon fontSize="small" />}
                   </ListItemIcon>
                   <ListItemText primary={child.label} sx={{ fontSize: 14 }} />
                 </ListItemButton>

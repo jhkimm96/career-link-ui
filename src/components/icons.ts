@@ -26,9 +26,32 @@ import {
   Description as DescriptionIcon,
   Business as BusinessIcon,
   List as ListIcon,
+
+  // 추가 아이콘들
+  Menu as MenuIcon,
+  ExpandMore as ExpandMoreIcon,
+  ChevronRight as ChevronRightIcon,
+  Person as PersonIcon,
+  Group as GroupIcon,
+  Work as WorkIcon,
+  School as SchoolIcon,
+  Article as ArticleIcon,
+  Assignment as AssignmentIcon,
+  UploadFile as UploadFileIcon,
+  Download as DownloadIcon,
+  Attachment as AttachmentIcon,
+  BusinessCenter as BusinessCenterIcon,
+  WorkHistory as WorkHistoryIcon,
+  Security as SecurityIcon,
+  Build as BuildIcon,
+  MenuBook as MenuBookIcon,
+  Category as CategoryIcon,
+  Campaign as CampaignIcon,
+  HelpOutline as HelpOutlineIcon,
 } from '@mui/icons-material';
 
 export const ICON_MAP: Record<string, React.ElementType> = {
+  // 기존
   Home: HomeIcon,
   Dashboard: DashboardIcon,
   Settings: SettingsIcon,
@@ -56,12 +79,33 @@ export const ICON_MAP: Record<string, React.ElementType> = {
   Description: DescriptionIcon,
   Business: BusinessIcon,
   List: ListIcon,
+
+  // 추가
+  Menu: MenuIcon,
+  ExpandMore: ExpandMoreIcon,
+  ChevronRight: ChevronRightIcon,
+  Person: PersonIcon,
+  Group: GroupIcon,
+  Work: WorkIcon,
+  School: SchoolIcon,
+  Article: ArticleIcon,
+  Assignment: AssignmentIcon,
+  UploadFile: UploadFileIcon,
+  Download: DownloadIcon,
+  Attachment: AttachmentIcon,
+  BusinessCenter: BusinessCenterIcon,
+  WorkHistory: WorkHistoryIcon,
+  Security: SecurityIcon,
+  Build: BuildIcon,
+  MenuBook: MenuBookIcon,
+  Category: CategoryIcon,
+  Campaign: CampaignIcon,
+  HelpOutline: HelpOutlineIcon,
 };
 
-const DEFAULT_ICON = FolderIcon;
-
-export function getMenuIcon(iconName?: string): React.ElementType {
-  return ICON_MAP[iconName ?? ''] || DEFAULT_ICON;
+export function getMenuIcon(iconName?: string): React.ElementType | undefined {
+  if (!iconName) return undefined;
+  return ICON_MAP[iconName];
 }
 
 export const ICON_NAMES = Object.keys(ICON_MAP);
