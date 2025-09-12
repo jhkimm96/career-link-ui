@@ -175,7 +175,6 @@ export default function AdminFaqPage() {
                 parentCode="CATEGORY"
                 value={form.category}
                 label="카테고리"
-                placeholder="카테고리 선택"
                 onChange={v => setForm(prev => ({ ...prev!, category: v }))}
                 size="small"
                 fullWidth

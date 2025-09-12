@@ -14,7 +14,7 @@ export default function MyPage() {
     } else if (role === 'EMP') {
       router.replace('/mypage/emp/home');
     } else if (role === 'USER') {
-      router.replace('/mypage/user/account');
+      router.replace('/mypage/applicant/account');
     } else {
       router.replace('/main');
     }

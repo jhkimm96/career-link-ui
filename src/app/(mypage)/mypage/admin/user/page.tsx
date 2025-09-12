@@ -176,7 +176,7 @@ export default function UserPage() {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <CommonSelectBox
           label="권한"
-          placeholder="전체"
+          defaultOptionLabel="전체"
           groupCode="USER_TYPE"
           parentCode="TYPE"
           value={role}

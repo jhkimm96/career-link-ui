@@ -60,7 +60,6 @@ export default function NoticeForm({
           parentCode="TYPE"
           value={form.noticeType ?? ''}
           onChange={value => setForm(prev => ({ ...prev, noticeType: value }))}
-          placeholder="선택"
         />
 
         <TextField

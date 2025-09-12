@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import PasswordChangeForm from '@/components/form/passwordChangeForm';
 import PageSectionLayout from '@/components/layouts/mypage/pageSectionLayout';
-import type { ApplicantDto } from '@/types/applicant';
+import type { ApplicantDto } from '@/types/applicant/applicant';
 import api from '@/api/axios';
 import NotificationSnackbar from '@/components/snackBar';
 import { closeSnackbar, notifyError, notifySuccess } from '@/api/apiNotify';

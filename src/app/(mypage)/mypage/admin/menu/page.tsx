@@ -438,7 +438,6 @@ export default function MenuPage() {
           parentCode="YN"
           value={selected?.isActive ?? ''}
           onChange={v => patchSelected({ isActive: v })}
-          placeholder="선택"
           disabled={isFormDisabled}
         />
         <TextField size="small" label="레벨" value={selected?.level ?? 1} disabled />
@@ -449,7 +448,6 @@ export default function MenuPage() {
           value={selected?.accessRole ?? filterRole}
           onChange={v => patchSelected({ accessRole: v as AccessRole })}
           disabled
-          placeholder="선택"
         />
         <Autocomplete
           freeSolo

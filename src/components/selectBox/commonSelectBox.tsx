@@ -1,7 +1,15 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  SxProps,
+  Theme,
+} from '@mui/material';
 import api from '@/api/axios';
 
 type CommonCode = {
@@ -15,10 +23,11 @@ type CommonSelectBoxProps = {
   value: string;
   onChange: (value: string) => void;
   label?: string;
-  placeholder?: string;
+  defaultOptionLabel?: string;
   disabled?: boolean;
   fullWidth?: boolean;
   size?: 'small' | 'medium';
+  sx?: SxProps<Theme>;
 };
 
 export default function CommonSelectBox({
@@ -27,10 +36,11 @@ export default function CommonSelectBox({
   value,
   onChange,
   label,
-  placeholder,
+  defaultOptionLabel = '선택',
   disabled = false,
   fullWidth = true,
   size = 'small',
+  sx,
 }: CommonSelectBoxProps) {
   const [options, setOptions] = useState<CommonCode[]>([]);
 
@@ -38,46 +48,44 @@ export default function CommonSelectBox({
     if (!groupCode) return;
 
     const fetchCodes = async () => {
-      let res;
-      if (parentCode) {
-        // 하위코드 API
-        res = await api.get('/common/children', {
-          params: { groupCode: groupCode, parentCode: parentCode },
-        });
-      } else {
-        // 상위코드 API
-        res = await api.get('/common/parents', {
-          params: { groupCode: groupCode },
-        });
-      }
+      const res = parentCode
+        ? await api.get('/common/children', { params: { groupCode, parentCode } })
+        : await api.get('/common/parents', { params: { groupCode } });
       setOptions(res.data ?? []);
     };
 
     fetchCodes();
   }, [groupCode, parentCode]);
 
+  const labelId = `${groupCode}-label`;
+  const selectId = `${groupCode}-select`;
+
   return (
-    <FormControl fullWidth={fullWidth} size={size} disabled={disabled}>
-      {label && <InputLabel shrink>{label}</InputLabel>}
+    <FormControl fullWidth={fullWidth} size={size} disabled={disabled} sx={sx} variant="outlined">
+      {label && (
+        <InputLabel id={labelId} shrink>
+          {label}
+        </InputLabel>
+      )}
       <Select
+        labelId={labelId}
+        id={selectId}
         value={value}
         onChange={(e: SelectChangeEvent<string>) => onChange(e.target.value)}
         displayEmpty
+        label={label}
         renderValue={selected => {
           if (!selected) {
-            return <em>{placeholder ?? '선택'}</em>;
+            return <em>{defaultOptionLabel ?? '선택'}</em>;
           }
           const selectedOption = options.find(opt => opt.code === selected);
           return selectedOption?.codeName ?? selected;
         }}
       >
-        {placeholder && (
+        {defaultOptionLabel && (
           <MenuItem value="">
-            <em>{placeholder}</em>
+            <em>{defaultOptionLabel}</em>
           </MenuItem>
-        )}
-        {!options.some(opt => opt.code === value) && value && (
-          <MenuItem value={value}>{value}</MenuItem>
         )}
         {options.map(({ code, codeName }) => (
           <MenuItem key={code} value={code}>
