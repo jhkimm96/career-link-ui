@@ -23,6 +23,7 @@ import {
   Tooltip,
   ListItemIcon,
   Checkbox,
+  CardActionArea,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
@@ -38,6 +39,7 @@ interface JobPosting {
   title: string;
   companyName: string;
   companyLogoUrl?: string;
+  jobField: string;
   location: string;
   employmentType?: string;
   experience?: string;
@@ -78,6 +80,19 @@ type JobFieldNode = {
   isLeaf?: boolean;
 };
 
+type Envelope<T> = {
+  header?: { result?: boolean; message?: string; code?: string | null };
+  body: T;
+  pagination?: {
+    page: number; // 0-base
+    size: number;
+    totalPages: number;
+    totalElements: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+};
+
 export default function JobPostingPage() {
   const { role, isLoggedIn } = useAuth();
   const isEmp = role === 'EMP';
@@ -98,6 +113,7 @@ export default function JobPostingPage() {
   const [loading, setLoading] = useState(false);
 
   const [page, setPage] = useState(1);
+  const [serverTotalPages, setServerTotalPages] = useState(1);
   const pageSize = 16;
 
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
@@ -237,7 +253,7 @@ export default function JobPostingPage() {
     try {
       const p = new URLSearchParams();
 
-      p.set('page', String(page - 1));
+      p.set('page', String(page - 1)); // 1-base → 0-base
       p.set('size', String(pageSize));
       if (keyword && keyword.trim()) p.set('keyword', keyword.trim());
 
@@ -255,14 +271,24 @@ export default function JobPostingPage() {
       appendAll('empType', empTypes);
       appendAll('sal', sals);
 
-      const res = await api.get('/job/jobList', { params: p, paramsSerializer: undefined });
+      const res = await api.get(`/job/jobList?${p.toString()}`);
 
-      const data = res.data;
-      const list: JobPosting[] = (data?.content ?? data ?? []).map((r: any) => ({
-        jobId: r.jobId ?? r.id,
+      const body = Array.isArray(res.data) ? res.data : res.data ? [res.data] : [];
+      const pg = (res as any).pagination as {
+        page: number;
+        size: number;
+        totalPages: number;
+        totalElements: number;
+        hasNext: boolean;
+        hasPrevious: boolean;
+      } | null;
+
+      const list: JobPosting[] = body.map((r: any) => ({
+        jobId: String(r.jobId ?? r.id),
         title: r.title,
         companyName: r.companyName ?? r.employerName,
         companyLogoUrl: r.companyLogoUrl ?? r.logoUrl ?? r.employerLogoUrl ?? undefined,
+        jobField: r.jobField ?? r.jobFieldCode ?? '',
         location: r.location ?? r.locationCode ?? '',
         employmentType: r.employmentType ?? r.employmentTypeCode ?? '',
         experience: r.experience ?? r.careerLevel ?? r.careerLevelCode ?? '',
@@ -274,7 +300,11 @@ export default function JobPostingPage() {
       }));
 
       setRows(list);
-      setRowCount(data?.totalElements ?? list.length);
+      const totalElements = pg?.totalElements ?? list.length;
+      const totalPages = pg?.totalPages ?? Math.max(1, Math.ceil(totalElements / pageSize));
+
+      setRowCount(totalElements);
+      setServerTotalPages(totalPages);
     } catch (e: any) {
       console.log(e.message ?? '채용공고 목록 조회 중 오류가 발생했습니다.');
     } finally {
@@ -284,12 +314,9 @@ export default function JobPostingPage() {
 
   useEffect(() => {
     void fetchJobs();
-  }, [page]);
+  }, [page, keyword, jobFields, locations, exps, edus, empTypes, sals]);
 
-  const handleSearch = () => {
-    setPage(1);
-    void fetchJobs();
-  };
+  const handleSearch = () => setPage(1);
 
   const [anchorLocation, setAnchorLocation] = useState<HTMLElement | null>(null);
   const [anchorJob, setAnchorJob] = useState<HTMLElement | null>(null);
@@ -745,130 +772,179 @@ export default function JobPostingPage() {
                   flexDirection: 'column',
                   borderRadius: 3,
                   border: '1px solid #ddd',
-                  boxShadow: '4px 4px 4px rgba(0,0,0,0.2)',
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.06)',
+                  transition: 'transform .2s ease, box-shadow .2s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 14px 34px rgba(0,0,0,0.12)',
+                  },
                 }}
               >
-                <CardHeader
-                  avatar={
-                    <Avatar
-                      alt={row.companyName}
-                      src={row.companyLogoUrl}
-                      variant="rounded"
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        bgcolor: 'grey.100',
-                        fontSize: 14,
-                        fontWeight: 700,
-                      }}
-                      imgProps={{ loading: 'lazy' }}
-                    >
-                      row.companyName
-                    </Avatar>
-                  }
-                  title={
-                    <Tooltip title={row.title} arrow disableInteractive>
-                      <Typography
-                        variant="h6"
+                <CardActionArea
+                  component="div"
+                  onClick={() => router.push(`/job-postings/detail?id=${row.jobId}`)}
+                  disableRipple
+                  sx={{ borderRadius: 'inherit', height: '100%', alignSelf: 'stretch' }}
+                >
+                  <CardHeader
+                    avatar={
+                      <Avatar
+                        alt={row.companyName}
+                        src={row.companyLogoUrl}
+                        variant="rounded"
                         sx={{
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          wordBreak: 'break-word',
-                          lineHeight: 1.25,
+                          width: 40,
+                          height: 40,
+                          bgcolor: 'grey.100',
+                          fontSize: 14,
+                          fontWeight: 700,
                         }}
+                        imgProps={{ loading: 'lazy' }}
                       >
-                        {row.title}
-                      </Typography>
-                    </Tooltip>
-                  }
-                  subheader={row.companyName}
-                  action={
-                    isLoggedIn && (
-                      <Button
-                        size="small"
-                        onClick={() => toggleBookmark(row.jobId)}
-                        sx={{ minWidth: 'auto' }}
-                      >
-                        {isBookmarked ? <BookmarkIcon color="primary" /> : <BookmarkBorderIcon />}
-                      </Button>
-                    )
-                  }
-                />
-                <Divider />
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Stack spacing={1.2}>
-                    <Stack direction="row" spacing={1} flexWrap="wrap">
-                      {row.location && (
-                        <Chip
+                        {row.companyName?.[0]}
+                      </Avatar>
+                    }
+                    title={
+                      <Tooltip title={row.title ?? ''} arrow disableInteractive>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            wordBreak: 'break-word',
+                            lineHeight: 1.25,
+                          }}
+                        >
+                          {row.title}
+                        </Typography>
+                      </Tooltip>
+                    }
+                    subheader={row.companyName}
+                    action={
+                      isLoggedIn && (
+                        <Button
                           size="small"
-                          variant="outlined"
-                          label={labelOfCode(filters?.locations, row.location) ?? row.location}
-                        />
-                      )}
-                      {row.employmentType && (
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={
-                            labelOfCode(filters?.employmentTypes, row.employmentType) ??
-                            row.employmentType
-                          }
-                        />
-                      )}
-                      {row.experience && (
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={
-                            labelOfCode(filters?.careerLevels, row.experience) ?? row.experience
-                          }
-                        />
-                      )}
-                      {row.education && (
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={
-                            labelOfCode(filters?.educationLevels, row.education) ?? row.education
-                          }
-                        />
-                      )}
-                      {row.salary && (
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={labelOfCode(filters?.salary, row.salary) ?? row.salary}
-                        />
-                      )}
-                      {(row.tags ?? []).slice(0, 3).map(t => (
-                        <Chip key={t} label={t} size="small" variant="outlined" />
-                      ))}
+                          onClick={() => toggleBookmark(row.jobId)}
+                          sx={{ minWidth: 'auto' }}
+                        >
+                          {isBookmarked ? <BookmarkIcon color="primary" /> : <BookmarkBorderIcon />}
+                        </Button>
+                      )
+                    }
+                  />
+                  <Divider sx={{ borderColor: 'transparent' }} />
+
+                  <CardContent sx={{ flexGrow: 1 }}>
+                    <Stack spacing={1.2}>
+                      <Stack direction="row" spacing={1} flexWrap="wrap">
+                        {row.jobField && (
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={labelOfCode(filters?.jobFields, row.jobField) ?? row.jobField}
+                            sx={{
+                              height: 24,
+                              borderRadius: '999px',
+                              border: 'none',
+                              bgcolor: 'action.hover',
+                              '& .MuiChip-label': { px: 1.2 },
+                            }}
+                          />
+                        )}
+                        {row.location && (
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={labelOfCode(filters?.locations, row.location) ?? row.location}
+                            sx={{
+                              height: 24,
+                              borderRadius: '999px',
+                              border: 'none',
+                              bgcolor: 'action.hover',
+                              '& .MuiChip-label': { px: 1.2 },
+                            }}
+                          />
+                        )}
+                        {row.employmentType && (
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={
+                              labelOfCode(filters?.employmentTypes, row.employmentType) ??
+                              row.employmentType
+                            }
+                            sx={{
+                              height: 24,
+                              borderRadius: '999px',
+                              border: 'none',
+                              bgcolor: 'action.hover',
+                              '& .MuiChip-label': { px: 1.2 },
+                            }}
+                          />
+                        )}
+                        {row.experience && (
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={
+                              labelOfCode(filters?.careerLevels, row.experience) ?? row.experience
+                            }
+                            sx={{
+                              height: 24,
+                              borderRadius: '999px',
+                              border: 'none',
+                              bgcolor: 'action.hover',
+                              '& .MuiChip-label': { px: 1.2 },
+                            }}
+                          />
+                        )}
+                        {row.education && (
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={
+                              labelOfCode(filters?.educationLevels, row.education) ?? row.education
+                            }
+                            sx={{
+                              height: 24,
+                              borderRadius: '999px',
+                              border: 'none',
+                              bgcolor: 'action.hover',
+                              '& .MuiChip-label': { px: 1.2 },
+                            }}
+                          />
+                        )}
+                        {row.salary && (
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={labelOfCode(filters?.salary, row.salary) ?? row.salary}
+                            sx={{
+                              height: 24,
+                              borderRadius: '999px',
+                              border: 'none',
+                              bgcolor: 'action.hover',
+                              '& .MuiChip-label': { px: 1.2 },
+                            }}
+                          />
+                        )}
+                      </Stack>
                     </Stack>
-                  </Stack>
-                </CardContent>
-                <Divider />
-                <CardActions sx={{ justifyContent: 'flex-end' }}>
-                  <Stack direction="row" spacing={2} flexWrap="wrap">
+                  </CardContent>
+
+                  <Divider sx={{ borderColor: 'transparent' }} />
+
+                  <CardActions sx={{ justifyContent: 'flex-end' }}>
                     <Typography
                       variant="body2"
                       sx={{ color: isOpenEnded ? 'success.main' : 'text.secondary' }}
                     >
                       마감: {isOpenEnded ? '상시모집' : fmtDate(row.deadline)}
                     </Typography>
-                  </Stack>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={() => {
-                      router.push(`/job-postings/detail?id=${row.jobId}`);
-                    }}
-                    disableElevation
-                  >
-                    상세보기
-                  </Button>
-                </CardActions>
+                  </CardActions>
+                </CardActionArea>
               </Card>
             );
           })
@@ -878,7 +954,7 @@ export default function JobPostingPage() {
       <Stack direction="row" justifyContent="center" sx={{ mt: 3 }}>
         <Pagination
           page={page}
-          count={totalPages}
+          count={serverTotalPages}
           onChange={(_, p) => setPage(p)}
           color="primary"
           shape="rounded"

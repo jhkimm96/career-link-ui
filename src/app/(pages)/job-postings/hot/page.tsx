@@ -276,6 +276,7 @@ export default function HotPage() {
               }}
             >
               <CardActionArea
+                component="div"
                 onClick={() => router.push(`/job-postings/detail?id=${row.jobId}`)}
                 disableRipple
                 sx={{ borderRadius: 'inherit', height: '100%', alignSelf: 'stretch' }}
