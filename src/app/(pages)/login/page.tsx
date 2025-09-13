@@ -47,16 +47,6 @@ const LoginPage: React.FC = () => {
 
   const { signIn } = useAuth();
 
-  const tokenDecodeToRole = (token: string | null) => {
-    if (!token) return null;
-    try {
-      const { role } = jwtDecode<JwtPayload>(token);
-      return role || null;
-    } catch {
-      return null;
-    }
-  };
-
   const handleClose = () => {
     closeSnackbar(setSnackbar);
   };
@@ -78,13 +68,19 @@ const LoginPage: React.FC = () => {
       return res.data;
     } catch (err: any) {
       notifyError(setSnackbar, err.message);
+      if (err.code === 'ACCOUNT_DORMANT') {
+        const next = '/main';
+        router.push(
+          `/reactivate?loginId=${encodeURIComponent(loginId)}&next=${encodeURIComponent(next)}`
+        );
+        return;
+      }
     }
   };
 
   return (
     <PagesSectionLayout>
       <Box
-        // component="form"
         sx={{
           p: 15,
           border: '1px solid',
