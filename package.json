@@ -16,6 +16,7 @@
     "@mui/x-data-grid": "^8.9.2",
     "@mui/x-date-pickers": "^8.8.0",
     "@mui/x-tree-view": "^8.9.0",
+    "@toast-ui/chart": "^4.6.1",
     "@toast-ui/editor": "^3.2.2",
     "axios": "^1.11.0",
     "dayjs": "^1.11.13",
