@@ -150,7 +150,6 @@ export default function ResumeForm({ url, initialData, onSuccess }: ResumeFormPr
         c => c.name || c.issuingOrganization || c.acquiredDate
       ),
       skills: resume.skills.filter(s => s.skillName),
-      coverLetters: resume.coverLetters?.filter(cl => cl.title || cl.content),
     };
 
     const validateMsg = validateResume(filteredResume);
@@ -402,7 +401,7 @@ export default function ResumeForm({ url, initialData, onSuccess }: ResumeFormPr
                     </>
                   )}
 
-                  <IconButton onClick={() => handleListRemove('educations', idx)}>
+                  <IconButton onClick={() => handleListRemove('educations', idx)} color="error">
                     <DeleteOutline />
                   </IconButton>
                 </Box>
@@ -483,7 +482,7 @@ export default function ResumeForm({ url, initialData, onSuccess }: ResumeFormPr
                     }
                     sx={{ flex: '1 1 100%' }}
                   />
-                  <IconButton onClick={() => handleListRemove('experiences', idx)}>
+                  <IconButton onClick={() => handleListRemove('experiences', idx)} color="error">
                     <DeleteOutline />
                   </IconButton>
                 </Box>
@@ -533,7 +532,7 @@ export default function ResumeForm({ url, initialData, onSuccess }: ResumeFormPr
                     }
                     slotProps={{ inputLabel: { shrink: true } }}
                   />
-                  <IconButton onClick={() => handleListRemove('certifications', idx)}>
+                  <IconButton onClick={() => handleListRemove('certifications', idx)} color="error">
                     <DeleteOutline />
                   </IconButton>
                 </Box>
@@ -570,7 +569,7 @@ export default function ResumeForm({ url, initialData, onSuccess }: ResumeFormPr
                     value={skill.proficiency || ''}
                     onChange={e => handleListChange('skills', idx, 'proficiency', e.target.value)}
                   />
-                  <IconButton onClick={() => handleListRemove('skills', idx)}>
+                  <IconButton onClick={() => handleListRemove('skills', idx)} color="error">
                     <DeleteOutline />
                   </IconButton>
                 </Box>

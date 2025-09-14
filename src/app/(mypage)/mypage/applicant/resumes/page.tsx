@@ -59,7 +59,23 @@ export default function ResumeListPage() {
     >
       <Stack spacing={2}>
         {resumes.map(resume => (
-          <Card key={resume.resumeId} sx={{ p: 2 }}>
+          <Card
+            key={resume.resumeId}
+            sx={{
+              p: 2,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 3,
+              border: '1px solid #ddd',
+              boxShadow: '0 6px 20px rgba(0,0,0,0.06)',
+              transition: 'transform .2s ease, box-shadow .2s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 14px 34px rgba(0,0,0,0.12)',
+              },
+            }}
+          >
             <CardContent>
               <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
                 <Typography variant="h6" noWrap>

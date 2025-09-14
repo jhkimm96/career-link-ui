@@ -11,7 +11,6 @@ export interface ResumeDto {
   experiences?: ExperienceDto[];
   certifications?: CertificationDto[];
   skills?: SkillDto[];
-  coverLetters?: CoverLetterDto[];
 }
 
 export interface EducationDto {
@@ -54,13 +53,6 @@ export interface SkillDto {
   proficiency?: string;
 }
 
-export interface CoverLetterDto {
-  coverLetterId?: number;
-  resumeId?: number;
-  title?: string;
-  content?: string;
-}
-
 // 등록/수정용 DTO
 export interface ResumeFormDto {
   title: string;
@@ -69,5 +61,4 @@ export interface ResumeFormDto {
   experiences: ExperienceDto[];
   certifications: CertificationDto[];
   skills: SkillDto[];
-  coverLetters?: CoverLetterDto[];
 }
