@@ -45,7 +45,7 @@ export default function AppHeader() {
   useEffect(() => {
     async function fetchMenus() {
       try {
-        const res = await api.get<MenuDto[]>('/admin/menu', {
+        const res = await api.get<MenuDto[]>('/common/getAllMenusByPublic', {
           params: { accessRole: 'PUBLIC' },
         });
         setNavItems(buildTree(res.data));
