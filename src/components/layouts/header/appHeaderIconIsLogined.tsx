@@ -1,11 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/libs/authContext';
-import { useState } from 'react';
-import MailOutlineIcon from '@mui/icons-material/MailOutline';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import api from '@/api/axios';
 
@@ -18,7 +15,7 @@ interface ReissueResponse {
 
 export default function AppHeaderIconIsLogined() {
   const router = useRouter();
-  const { isLoggedIn, setIsLoggedIn, remainingTime, setRemainingTime } = useAuth();
+  const { setIsLoggedIn, remainingTime, setRemainingTime } = useAuth();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -59,7 +56,6 @@ export default function AppHeaderIconIsLogined() {
     try {
       await api.post('/api/users/logout');
       localStorage.removeItem('accessToken');
-      console.log(localStorage.getItem('accessToken'));
       setIsLoggedIn(false);
       setRemainingTime(0);
       router.push('/main');
@@ -79,80 +75,93 @@ export default function AppHeaderIconIsLogined() {
   };
 
   return (
-    <>
-      <Box display="flex" alignItems="center" gap={2}>
-        <IconButton>
-          <MailOutlineIcon fontSize="small" />
-        </IconButton>
-        <IconButton>
-          <NotificationsNoneIcon fontSize="small" />
-        </IconButton>
-        <IconButton onClick={e => handleMenuClick(e, 'logout')}>
-          <AccountCircle fontSize="small" />
-        </IconButton>
-        <Menu
-          anchorEl={anchorEl}
-          open={openMenu === 'logout'}
-          onClose={handleClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <MenuItem
-            onClick={() => {
-              handleClose();
-              router.push('/mypage');
-            }}
-          >
-            마이페이지
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handleClose();
-              handleLogout();
-            }}
-          >
-            로그아웃
-          </MenuItem>
-        </Menu>
+    <Box display="flex" alignItems="center" gap={2}>
+      {/* 임시 비활성화 아이콘 */}
+      {/*
+      <IconButton>
+        <MailOutlineIcon fontSize="small" />
+      </IconButton>
+      <IconButton>
+        <NotificationsNoneIcon fontSize="small" />
+      </IconButton>
+      */}
+      <IconButton onClick={e => handleMenuClick(e, 'account')}>
+        <AccountCircle fontSize="small" />
+      </IconButton>
 
-        <Paper
-          elevation={4}
-          sx={{
-            px: 1.2,
-            py: 0.5,
-            borderRadius: 2,
-            backgroundColor: 'primary.main',
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
+      <Menu
+        anchorEl={anchorEl}
+        open={openMenu === 'account'}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 1,
+              borderRadius: 2,
+              boxShadow: 2,
+              minWidth: 160,
+              border: '1px solid #eee',
+            },
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            router.push('/mypage');
           }}
         >
-          <Typography sx={{ fontWeight: 500, fontSize: '10px' }}>⏰ 남은 시간:</Typography>
-          <Typography sx={{ fontWeight: 600, fontSize: '10px' }}>
-            {formatTime(remainingTime)}
-          </Typography>
-          <Button
-            onClick={handleExtendSession}
-            variant="outlined"
-            size="small"
-            sx={{
-              ml: 1,
-              fontSize: '10px',
+          마이페이지
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            handleLogout();
+          }}
+        >
+          로그아웃
+        </MenuItem>
+      </Menu>
+
+      <Paper
+        elevation={4}
+        sx={{
+          px: 1.2,
+          py: 0.5,
+          borderRadius: 2,
+          backgroundColor: 'primary.main',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <Typography sx={{ fontWeight: 500, fontSize: '10px' }}>⏰ 남은 시간:</Typography>
+        <Typography sx={{ fontWeight: 600, fontSize: '10px' }}>
+          {formatTime(remainingTime)}
+        </Typography>
+        <Button
+          onClick={handleExtendSession}
+          variant="outlined"
+          size="small"
+          sx={{
+            ml: 1,
+            fontSize: '10px',
+            borderColor: 'white',
+            color: 'white',
+            px: 0.8,
+            py: 0.3,
+            '&:hover': {
               borderColor: 'white',
-              color: 'white',
-              px: 0.8,
-              py: 0.3,
-              '&:hover': {
-                borderColor: 'white',
-                backgroundColor: 'rgba(255,255,255,0.1)',
-              },
-            }}
-          >
-            연장
-          </Button>
-        </Paper>
-      </Box>
-    </>
+              backgroundColor: 'rgba(255,255,255,0.1)',
+            },
+          }}
+        >
+          연장
+        </Button>
+      </Paper>
+    </Box>
   );
 }
