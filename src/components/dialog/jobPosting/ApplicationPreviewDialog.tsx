@@ -24,17 +24,19 @@ import useCommonCodeMap from '@/components/selectBox/commonCodeMap';
 
 type Props = {
   open: boolean;
-  resumeId: number | null;
-  coverLetterId: number | null;
+  applicationId?: number | null; // ✅ Employer 전용
+  resumeId?: number | null; // ✅ Applicant 전용
+  coverLetterId?: number | null; // ✅ Applicant 전용
   onClose: () => void;
-  onApply: () => void;
+  onApply?: () => void; // optional
   applying?: boolean;
 };
 
 export default function ApplicationPreviewDialog({
   open,
-  resumeId,
-  coverLetterId,
+  applicationId = null,
+  resumeId = null,
+  coverLetterId = null,
   onClose,
   onApply,
   applying = false,
@@ -51,23 +53,33 @@ export default function ApplicationPreviewDialog({
     (async () => {
       try {
         setLoading(true);
-        if (resumeId) {
-          const res = await api.get(`/applicant/resume/getResume/${resumeId}`);
-          setResume(res.data);
+
+        if (applicationId) {
+          // Employer 전용 API
+          const res = await api.get(`/emp/applications/${applicationId}/preview`);
+          setResume(res.data.resume ?? null);
+          setCoverLetter(res.data.coverLetter ?? null);
         } else {
-          setResume(null);
-        }
-        if (coverLetterId) {
-          const cl = await api.get(`/applicant/coverLetter/getMyCoverLetter/${coverLetterId}`);
-          setCoverLetter(cl.data);
-        } else {
-          setCoverLetter(null);
+          // Applicant 전용 API
+          if (resumeId) {
+            const res = await api.get(`/applicant/resume/getResume/${resumeId}`);
+            setResume(res.data);
+          } else {
+            setResume(null);
+          }
+
+          if (coverLetterId) {
+            const cl = await api.get(`/applicant/coverLetter/getMyCoverLetter/${coverLetterId}`);
+            setCoverLetter(cl.data);
+          } else {
+            setCoverLetter(null);
+          }
         }
       } finally {
         setLoading(false);
       }
     })();
-  }, [open, resumeId, coverLetterId]);
+  }, [open, applicationId, resumeId, coverLetterId]);
 
   // 안전한 배열 참조
   const educations = resume?.educations ?? [];
@@ -284,9 +296,11 @@ export default function ApplicationPreviewDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>닫기</Button>
-        <Button variant="contained" onClick={onApply} disabled={applying || !resume}>
-          {applying ? '지원 중...' : '지원하기'}
-        </Button>
+        {onApply && (
+          <Button variant="contained" onClick={onApply} disabled={applying || !resume}>
+            {applying ? '지원 중...' : '지원하기'}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
