@@ -221,7 +221,7 @@ export default function JobPostingDetailPage() {
         coverLetterId: selectedCoverLetterId ?? undefined,
       };
 
-      await api.post('/applicant/job-postings/apply', payload);
+      await api.post('/applicant/application/job-postings/apply', payload);
 
       notifySuccess(setSnackbar, '지원이 완료되었습니다');
       setApplyOpen(false); // 작성 다이얼로그 닫기

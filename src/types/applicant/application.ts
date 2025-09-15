@@ -6,7 +6,7 @@ export interface ApplicationDto {
   email?: string;
   resumeId?: number; // 추가
   coverLetterId?: number | null; // 추가
-  resumeTitle: string;
+  resumeTitle?: string;
   status?: string;
   appliedAt?: string;
   updatedAt?: string;
