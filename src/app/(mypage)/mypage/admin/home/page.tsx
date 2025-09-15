@@ -109,7 +109,7 @@ function ChartSection({
         const gg = gNow.toUpperCase(); // 서버 Enum: DAY/MONTH/YEAR
         const { fromStr, toStr } = makeRangeStrings(gNow, fNow, tNow);
 
-        const res = await api.get<StatsResponse>(`/admin/stats/${metric}`, {
+        const res = await api.get<StatsResponse>(`/admin/dashboard/stats/${metric}`, {
           params: { granularity: gg, from: fromStr, to: toStr },
         });
 

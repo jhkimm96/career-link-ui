@@ -303,7 +303,7 @@ export default function Page() {
       const { page, pageSize } = parentPagination;
       const sort = parentSortModel[0]?.field;
       const direction = parentSortModel[0]?.sort;
-      const res = await api.get('/admin/getParentCodes', {
+      const res = await api.get('/admin/commonCode/getParentCodes', {
         params: { page, size: pageSize, sort, direction, keyword },
       });
       setParents(res.data);
@@ -328,7 +328,7 @@ export default function Page() {
       const { page, pageSize } = childPagination;
       const sort = childSortModel[0]?.field;
       const direction = childSortModel[0]?.sort;
-      const res = await api.get('/admin/getChildCodes', {
+      const res = await api.get('/admin/commonCode/getChildCodes', {
         params: {
           page,
           size: pageSize,
@@ -550,7 +550,7 @@ export default function Page() {
     await commitAllEdits();
     try {
       const dto = buildSaveDto();
-      const res = await api.post('/admin/saveCommonCodes', dto);
+      const res = await api.post('/admin/commonCode/saveCommonCodes', dto);
 
       // 큐 초기화 + 재조회
       setParentNewIds(new Set());

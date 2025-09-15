@@ -64,7 +64,7 @@ export default function AdminFaqPage() {
 
   const fetchFaqs = async () => {
     try {
-      const res = await api.get('/admin/getFaqs', {
+      const res = await api.get('/admin/faq/getFaqs', {
         params: { category: category },
       });
       setFaqs(res.data ?? []);
@@ -82,7 +82,7 @@ export default function AdminFaqPage() {
 
   const handleSaveNew = async () => {
     try {
-      await api.post('/admin/createFaq', form);
+      await api.post('/admin/faq/createFaq', form);
       notifySuccess(setSnackbar, '등록되었습니다.');
       setForm(null);
       fetchFaqs();
@@ -101,7 +101,7 @@ export default function AdminFaqPage() {
 
   const handleSaveEdit = async (faq: EditableFaq) => {
     try {
-      const res = await api.put('/admin/updateFaq', faq);
+      const res = await api.put('/admin/faq/updateFaq', faq);
       notifySuccess(setSnackbar, res.message);
       setFaqs(prev => prev.map(f => (f.faqId === faq.faqId ? { ...faq, isEditing: false } : f)));
     } catch (e: any) {
@@ -120,7 +120,7 @@ export default function AdminFaqPage() {
     });
     if (isConfirmed) {
       try {
-        await api.delete(`/admin/deleteFaq/${faqId}`);
+        await api.delete(`/admin/faq/deleteFaq/${faqId}`);
         notifySuccess(setSnackbar, '삭제되었습니다.');
         fetchFaqs();
       } catch (e: any) {

@@ -111,7 +111,7 @@ export default function AdminNoticePage() {
       const { page, pageSize } = pagination;
       const sort = sortModel[0]?.field;
       const direction = sortModel[0]?.sort;
-      const res = await api.get('/admin/getNotices', {
+      const res = await api.get('/admin/notice/getNotices', {
         params: { page, size: pageSize, sort, direction },
       });
       setNotices(res.data);

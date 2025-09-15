@@ -128,7 +128,7 @@ export default function UserPage() {
       const { page, pageSize } = usersPagination;
       const sort = usersSortModel[0]?.field;
       const direction = usersSortModel[0]?.sort;
-      const res = await api.get('/admin/getUsers', {
+      const res = await api.get('/admin/applicant/getUsers', {
         params: { page, size: pageSize, sort, direction, keyword, role },
       });
       setUsers(res.data);
@@ -160,7 +160,7 @@ export default function UserPage() {
         userStatus: r.userStatus,
         role: r.role,
       }));
-      const res = await api.post('/admin/saveUsers', editRows); // 백엔드에 맞춰 수정
+      const res = await api.post('/admin/applicant/saveUsers', editRows); // 백엔드에 맞춰 수정
 
       setEditedRows(new Map());
       await getUsers();
