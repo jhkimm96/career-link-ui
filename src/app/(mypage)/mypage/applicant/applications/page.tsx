@@ -68,7 +68,7 @@ export default function ApplicationListPage() {
   const fetchData = useCallback(
     async (reset = false) => {
       try {
-        const res = await api.get('/applicant/job-postings/getMyApplications', {
+        const res = await api.get('/applicant/application/job-postings/getMyApplications', {
           params: { period, page, size: 6 },
         });
 
@@ -118,7 +118,7 @@ export default function ApplicationListPage() {
   // 지원 취소
   const handleCancel = async (applicationId: number) => {
     try {
-      await api.put(`/applicant/job-postings/cancel/${applicationId}`);
+      await api.put(`/applicant/application/job-postings/cancel/${applicationId}`);
       notifySuccess(setSnackbar, '지원이 취소되었습니다.');
       setApplications(prev =>
         prev.map(app =>
@@ -137,7 +137,7 @@ export default function ApplicationListPage() {
   // 다시 지원하기
   const handleReapply = async (applicationId: number) => {
     try {
-      await api.post(`/applicant/job-postings/reapply/${applicationId}`);
+      await api.post(`/applicant/application/job-postings/reapply/${applicationId}`);
       notifySuccess(setSnackbar, '다시 지원이 완료되었습니다.');
       setApplications(prev =>
         prev.map(app =>
