@@ -2,33 +2,40 @@ import { NextRequest, NextResponse } from 'next/server';
 import { jwtDecode } from 'jwt-decode';
 
 export function middleware(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
+
+  if (!pathname.startsWith('/mypage')) {
+    return NextResponse.next();
+  }
+
   const token = request.cookies.get('accessToken')?.value;
-  const { pathname } = request.nextUrl;
+  if (!token) {
+    const url = new URL('/login', request.url);
+    url.searchParams.set('next', pathname + search); // 로그인 후 복귀용
+    return NextResponse.redirect(url);
+  }
 
-  const protectedPaths = ['/admin', '/applicant', '/emp'];
-
-  if (protectedPaths.some(path => pathname.startsWith(path))) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/', request.url));
+  // 역할 검사: /mypage/admin | /mypage/user | /mypage/emp
+  try {
+    const { role } = jwtDecode<{ role?: string }>(token) || {};
+    if (pathname.startsWith('/mypage/admin') && role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/403', request.url));
     }
-
-    try {
-      const { role } = jwtDecode(token) as { role: string };
-      if (
-        (pathname.startsWith('/mypage/admin') && role !== 'ADMIN') ||
-        (pathname.startsWith('/mypage/user') && role !== 'USER') ||
-        (pathname.startsWith('/mypage/emp') && role !== 'EMP')
-      ) {
-        return NextResponse.redirect(new URL('/403', request.url));
-      }
-    } catch {
-      return NextResponse.redirect(new URL('/', request.url));
+    if (pathname.startsWith('/mypage/user') && role !== 'USER') {
+      return NextResponse.redirect(new URL('/403', request.url));
     }
+    if (pathname.startsWith('/mypage/emp') && role !== 'EMP') {
+      return NextResponse.redirect(new URL('/403', request.url));
+    }
+  } catch {
+    const url = new URL('/login', request.url);
+    url.searchParams.set('next', pathname + search);
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin', '/admin/:path*', '/applicant/:path*', '/emp/:path*'],
+  matcher: ['/mypage/:path*'],
 };

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
 import api from '@/api/axios';
 import dayjs, { Dayjs } from 'dayjs';
 import {

@@ -260,6 +260,7 @@ export default function JobPostingDetailPage() {
           <RightStickyCard
             loading={loading}
             companyName={detail?.companyName}
+            employerId={detail?.employerId}
             chips={chips}
             deadline={detail?.applicationDeadline ?? null}
             onApply={openApplyModal}
@@ -449,7 +450,7 @@ function MainContent({
             color="primary"
             gutterBottom
             sx={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
-            onClick={() => router.push('/emp/profile')}
+            onClick={() => router.push(`/emp/profile?id=${encodeURIComponent(detail.employerId)}`)}
           >
             {detail.companyName}
           </Typography>
@@ -474,12 +475,14 @@ function MainContent({
 function RightStickyCard({
   loading,
   companyName,
+  employerId,
   chips,
   deadline,
   onApply,
 }: {
   loading: boolean;
   companyName?: string | null;
+  employerId?: string;
   chips: string[];
   deadline: string | null;
   onApply: () => void;
@@ -515,7 +518,10 @@ function RightStickyCard({
                 gutterBottom
                 color="primary"
                 sx={{ cursor: 'pointer', display: 'inline-flex' }}
-                onClick={() => router.push('/emp/profile')}
+                onClick={() => {
+                  if (!employerId) return;
+                  router.push(`/emp/profile?id=${encodeURIComponent(employerId)}`);
+                }}
               >
                 {companyName ?? '회사명'}
               </Typography>

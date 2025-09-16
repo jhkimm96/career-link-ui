@@ -1,101 +1,122 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import {
   Box,
   Card,
   CardContent,
   CardHeader,
+  CardActionArea,
   Container,
   Divider,
   Paper,
   Stack,
   Typography,
   Avatar,
+  Chip,
+  Grid,
+  Tooltip,
 } from '@mui/material';
 import { Building2 } from 'lucide-react';
 import api from '@/api/axios';
 import NotificationSnackbar from '@/components/snackBar';
 import { closeSnackbar, notifyError } from '@/api/apiNotify';
+import { useSearchParams, useRouter } from 'next/navigation';
 
-interface EmployerInfo {
-  employerId: string;
-  companyTypeCode: string;
-  companyName: string;
-  bizRegNo: string;
-  bizRegistrationUrl: string;
-  ceoName: string;
-  companyPhone: string;
-  companyEmail: string;
-  baseAddress: string;
-  detailAddress: string;
-  postcode: string;
-  establishedDate: Dayjs | null;
-  industryCode: string;
-  companyIntro: string;
-  homepageUrl: string;
-  companyLogoUrl: string;
-  employeeCount: number | null;
+interface JobPostingSummary {
+  jobPostingId: number;
+  title: string;
+
+  jobFieldCode?: string | null;
+  jobFieldName?: string | null;
+
+  locationCode?: string | null;
+  locationName?: string | null;
+
+  employmentTypeCode?: string | null;
+  employmentTypeName?: string | null;
+
+  careerLevelCode?: string | null;
+  careerLevelName?: string | null;
+
+  salaryCode?: string | null;
+  salaryName?: string | null;
+
+  applicationDeadline?: string | null;
+  viewCount: number;
 }
 
-// 단일 필드 표시 전용 컴포넌트
+interface EmployerPublicProfile {
+  employerId: string;
+  companyName: string;
+  companyLogoUrl: string | null;
+  homepageUrl: string | null;
+  companyIntro: string | null;
+  locationCode: string | null;
+  locationName: string | null;
+
+  activePostingCount: number;
+  hiring: boolean;
+
+  recentPostings: JobPostingSummary[];
+}
+
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: '160px 1fr' },
-        alignItems: 'flex-start',
-        gap: 1.5,
-      }}
-    >
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '160px 1fr' }, gap: 1.5 }}>
       <Typography variant="body2" color="text.secondary" sx={{ pt: 0.5 }}>
         {label}
       </Typography>
       <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>
-        {value || '—'}
+        {value ?? '—'}
       </Typography>
     </Box>
   );
 }
 
+const formatDeadline = (val?: string | null) => {
+  if (!val) return '상시모집';
+  const d = dayjs(val);
+  return d.isValid() ? d.format('YYYY-MM-DD') : val;
+};
+
 export default function EmpProfileViewPage() {
-  const [form, setForm] = useState<EmployerInfo | null>(null);
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'info' | 'success' | 'warning' | 'error';
-  }>({ open: false, message: '', severity: 'info' });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const id = searchParams.get('id');
+  const employerId = id && id !== 'undefined' ? decodeURIComponent(id) : '';
 
-  // 로고 소스
-  const logoSrc = useMemo(() => form?.companyLogoUrl || '', [form?.companyLogoUrl]);
+  const [data, setData] = useState<EmployerPublicProfile | null>(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'info' as 'info' | 'success' | 'warning' | 'error',
+  });
 
+  const logoSrc = useMemo(() => data?.companyLogoUrl || '', [data?.companyLogoUrl]);
   const handleClose = () => closeSnackbar(setSnackbar);
 
-  // 기업정보 조회 (읽기 전용)
   useEffect(() => {
-    const fetchEmployerInfo = async () => {
+    if (!employerId) {
+      notifyError(setSnackbar, '잘못된 접근입니다. 기업 식별자가 없습니다.');
+      return;
+    }
+    (async () => {
       try {
-        const res = await api.get<
-          Omit<EmployerInfo, 'establishedDate'> & { establishedDate: string | null }
-        >('/emp/info');
-
-        const data = res.data as any;
-        setForm({
-          ...data,
-          establishedDate: data.establishedDate ? dayjs(data.establishedDate) : null,
-          employeeCount:
-            typeof data.employeeCount === 'number'
-              ? data.employeeCount
-              : Number(data.employeeCount ?? 0),
-        });
+        const res = await api.get<EmployerPublicProfile>(
+          `/public/employers/${encodeURIComponent(employerId)}`
+        );
+        setData(res.data ?? null);
       } catch (err: any) {
         notifyError(setSnackbar, '기업 정보를 찾을 수 없습니다. 관리자에게 문의하세요.');
       }
-    };
-    fetchEmployerInfo();
-  }, []);
+    })();
+  }, [employerId]);
+
+  const handleOpenPosting = (jobPostingId: number) => {
+    router.push(`/job-postings/detail?id=${encodeURIComponent(String(jobPostingId))}`);
+  };
 
   return (
     <Container maxWidth="md" className="py-6">
@@ -112,13 +133,23 @@ export default function EmpProfileViewPage() {
           spacing={2}
         >
           <Box>
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
               <Building2 size={22} />
-              <Typography variant="h6">{form?.companyName || '기업 정보'}</Typography>
+              <Typography variant="h6">{data?.companyName || '기업 정보'}</Typography>
+              {typeof data?.activePostingCount === 'number' && (
+                <Chip
+                  size="small"
+                  label={`공고 ${data.activePostingCount.toLocaleString()}건`}
+                  sx={{ ml: { xs: 0, md: 1 } }}
+                />
+              )}
+              {data?.hiring && <Chip size="small" color="success" label="채용 진행중" />}
             </Stack>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              사업자등록번호 {form?.bizRegNo || '—'} · 대표 {form?.ceoName || '—'}
-            </Typography>
+            {data?.locationName && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                {data.locationName}
+              </Typography>
+            )}
           </Box>
 
           {/* 기업 이미지 */}
@@ -162,72 +193,87 @@ export default function EmpProfileViewPage() {
 
         <Divider sx={{ my: 3 }} />
 
-        {/* 상세 정보 */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr' }, gap: 3 }}>
-          <Box>
-            <Stack spacing={2}>
-              <Typography variant="subtitle2" color="text.secondary">
-                기본 정보
-              </Typography>
+        {/* 기본 정보 */}
+        <Stack spacing={2} sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" color="text.secondary">
+            기본 정보
+          </Typography>
+          <DetailRow label="기업명" value={data?.companyName} />
+          <DetailRow
+            label="홈페이지"
+            value={
+              data?.homepageUrl ? (
+                <a href={data.homepageUrl} target="_blank" rel="noopener noreferrer">
+                  {data.homepageUrl}
+                </a>
+              ) : (
+                '—'
+              )
+            }
+          />
+          <DetailRow label="기업소개" value={data?.companyIntro} />
+          <DetailRow label="지역" value={data?.locationName ?? data?.locationCode ?? '—'} />
+        </Stack>
 
-              <DetailRow label="사업자등록번호" value={form?.bizRegNo} />
-              <DetailRow label="대표자명" value={form?.ceoName} />
-              <DetailRow
-                label="설립일"
-                value={
-                  form?.establishedDate ? dayjs(form.establishedDate).format('YYYY/MM/DD') : '—'
-                }
-              />
-              <DetailRow label="기업분류 코드" value={form?.companyTypeCode} />
-              <DetailRow label="업종 코드" value={form?.industryCode} />
+        {/* 최근 공고 */}
+        <Stack spacing={1} direction="row" alignItems="center" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" color="text.secondary">
+            최근 공고
+          </Typography>
+          {data?.recentPostings?.length ? (
+            <Chip
+              size="small"
+              label={`${data.recentPostings.length.toLocaleString()}건`}
+              variant="outlined"
+            />
+          ) : null}
+        </Stack>
 
-              <Divider sx={{ my: 1 }} />
+        {data?.recentPostings?.length ? (
+          <Grid container spacing={2}>
+            {data.recentPostings.map(jp => {
+              const chips = [
+                jp.employmentTypeName,
+                jp.careerLevelName,
+                jp.jobFieldName,
+                jp.locationName,
+                jp.salaryName,
+              ].filter(Boolean) as string[];
 
-              <Typography variant="subtitle2" color="text.secondary">
-                연락처 & 웹
-              </Typography>
+              return (
+                <Grid item xs={12} md={6} key={jp.jobPostingId}>
+                  <Card variant="outlined" sx={{ height: '100%' }}>
+                    <CardActionArea onClick={() => handleOpenPosting(jp.jobPostingId)}>
+                      <CardContent>
+                        <Tooltip title="공고 상세보기" arrow>
+                          <Typography variant="subtitle1" fontWeight={700} gutterBottom noWrap>
+                            {jp.title}
+                          </Typography>
+                        </Tooltip>
 
-              <DetailRow label="대표 이메일" value={form?.companyEmail} />
-              <DetailRow label="전화번호" value={form?.companyPhone} />
-              <DetailRow
-                label="기업홈페이지"
-                value={
-                  form?.homepageUrl ? (
-                    <a href={form.homepageUrl} target="_blank" rel="noopener noreferrer">
-                      {form.homepageUrl}
-                    </a>
-                  ) : (
-                    '—'
-                  )
-                }
-              />
-
-              <Divider sx={{ my: 1 }} />
-
-              <Typography variant="subtitle2" color="text.secondary">
-                주소
-              </Typography>
-              <DetailRow label="우편번호" value={form?.postcode} />
-              <DetailRow label="기본주소" value={form?.baseAddress} />
-              <DetailRow label="상세주소" value={form?.detailAddress} />
-
-              <Divider sx={{ my: 1 }} />
-
-              <Typography variant="subtitle2" color="text.secondary">
-                조직
-              </Typography>
-              <DetailRow
-                label="사원수"
-                value={
-                  typeof form?.employeeCount === 'number' && form?.employeeCount >= 0
-                    ? `${form.employeeCount.toLocaleString()}명`
-                    : '—'
-                }
-              />
-              <DetailRow label="기업설명" value={form?.companyIntro} />
-            </Stack>
-          </Box>
-        </Box>
+                        <Stack direction="row" spacing={2}>
+                          <Typography variant="body2" color="text.secondary">
+                            마감일: {formatDeadline(jp.applicationDeadline)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            조회수: {jp.viewCount?.toLocaleString?.() ?? 0}
+                          </Typography>
+                        </Stack>
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
+        ) : (
+          <Paper
+            variant="outlined"
+            sx={{ p: 3, borderRadius: 2, textAlign: 'center', color: 'text.secondary' }}
+          >
+            표시할 최근 공고가 없습니다.
+          </Paper>
+        )}
       </Paper>
 
       <NotificationSnackbar
