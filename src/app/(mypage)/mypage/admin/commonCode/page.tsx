@@ -27,7 +27,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
 import LockIcon from '@mui/icons-material/Lock';
-import { closeSnackbar, notifyError, notifySuccess } from '@/api/apiNotify';
+import { closeSnackbar, notifyError, notifyInfo, notifySuccess } from '@/api/apiNotify';
 import NotificationSnackbar from '@/components/snackBar';
 import { useConfirm } from '@/components/confirm';
 import CommonSelectBox from '@/components/selectBox/commonSelectBox';
@@ -378,10 +378,16 @@ export default function Page() {
     setParents(prev => [row, ...prev]);
     setParentNewIds(prev => new Set(prev).add(row.id));
     setParentDirtyIds(prev => new Set(prev).add(row.id));
+
+    setSelectedParent(row);
   };
 
   const addChild = () => {
-    if (!selectedParent) return;
+    if (!selectedParent || !selectedParent.groupCode?.trim()) {
+      notifyInfo(setSnackbar, '먼저 입력된 부모코드 선택 후 추가해주세요.');
+      return;
+    }
+
     const nextSort = (children.reduce((m, r) => Math.max(m, r.sortOrder || 0), 0) || 0) + 1;
     const row: CodeDto = {
       id: `NEW_${Date.now()}`,
@@ -548,6 +554,22 @@ export default function Page() {
   // ===== 저장 =====
   const handleSaveAll = async (): Promise<boolean> => {
     await commitAllEdits();
+    // === Validation ===
+    // 부모 필수값 체크
+    const invalidParents = parents.filter(p => !p.groupCode?.trim() || !p.code?.trim());
+    if (invalidParents.length > 0) {
+      notifyInfo(setSnackbar, '부모코드 저장 시 [그룹코드]와 [코드]는 필수입니다.');
+      return false;
+    }
+
+    // 자식 필수값 체크
+    const invalidChildren = children.filter(
+      c => !c.groupCode?.trim() || !c.parentCode?.trim() || !c.code?.trim()
+    );
+    if (invalidChildren.length > 0) {
+      notifyInfo(setSnackbar, '하위코드 저장 시 [그룹코드], [부모코드], [코드]는 필수입니다.');
+      return false;
+    }
     try {
       const dto = buildSaveDto();
       const res = await api.post('/admin/commonCode/saveCommonCodes', dto);
