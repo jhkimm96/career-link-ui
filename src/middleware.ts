@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 역할 검사: /mypage/admin | /mypage/user | /mypage/emp
+  // 역할 검사: /mypage/admin | /mypage/user | /mypage/emp등
   try {
     const { role } = jwtDecode<{ role?: string }>(token) || {};
     if (pathname.startsWith('/mypage/admin') && role !== 'ADMIN') {

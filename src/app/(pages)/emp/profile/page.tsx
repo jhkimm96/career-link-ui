@@ -215,7 +215,7 @@ export default function EmpProfileViewPage() {
           <DetailRow label="지역" value={data?.locationName ?? data?.locationCode ?? '—'} />
         </Stack>
 
-        {/* 최근 공고 */}
+        {/* 최근 공고 보기 */}
         <Stack spacing={1} direction="row" alignItems="center" sx={{ mb: 1 }}>
           <Typography variant="subtitle2" color="text.secondary">
             최근 공고

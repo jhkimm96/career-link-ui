@@ -390,7 +390,7 @@ export default function JobPostingDetailPage() {
         applying={applying}
       />
 
-      {/* ✅ Snackbar 알림 */}
+      {/*  Snackbar 알림 */}
       <NotificationSnackbar
         open={snackbar.open}
         message={snackbar.message}

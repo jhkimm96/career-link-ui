@@ -291,9 +291,9 @@ export default function EmpProfilePage() {
 
                 <Box
                   sx={{
-                    gridColumn: '1 / -1', // 부모 그리드에서 전체 폭 차지
+                    gridColumn: '1 / -1',
                     display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, // 안쪽에서 2열
+                    gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
                     gap: 2,
                   }}
                 >
