@@ -7,7 +7,7 @@ import {
   type GridSortModel,
 } from '@mui/x-data-grid';
 import React, { useEffect, useState } from 'react';
-import { AlertColor, Box, Button, Stack, Typography } from '@mui/material';
+import { AlertColor, Box, Button, Chip, Stack, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import NotificationSnackbar from '@/components/snackBar';
 import api from '@/api/axios';
@@ -128,18 +128,31 @@ export default function AdminNoticePage() {
     <PageSectionLayout title="공지사항 관리">
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 600 }}>
         {/* 상단 툴바 */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-            공지사항 목록 ({rowCount}건)
-          </Typography>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={() => router.push('/notice/new')}
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ gap: 1, flexWrap: 'wrap', mb: 1 }}
+        >
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1}
+            sx={{ fontWeight: 600, flexWrap: 'wrap' }}
           >
-            등록
-          </Button>
+            <Typography>공지사항</Typography>
+            <Chip size="small" variant="outlined" label={`${rowCount}건`} />
+          </Stack>
+          <Stack>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => router.push('/notice/new')}
+            >
+              등록
+            </Button>
+          </Stack>
         </Stack>
 
         {/* 데이터 그리드 */}

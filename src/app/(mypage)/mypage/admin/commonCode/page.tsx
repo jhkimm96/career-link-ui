@@ -88,7 +88,30 @@ export default function Page() {
         headerAlign: 'center',
         align: 'center',
         editable: true,
+        renderCell: params => {
+          const isLocked = !String(params.id).startsWith('NEW_') && !params.row.parentCode;
+          // NEW_ 가 아니고, parentCode == null → 부모코드
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                height: '100%',
+                pl: 1,
+                bgcolor: isLocked ? 'grey.100' : 'inherit',
+                color: isLocked ? 'text.disabled' : 'inherit',
+                cursor: isLocked ? 'not-allowed' : 'text',
+              }}
+            >
+              {isLocked && <LockIcon fontSize="small" sx={{ mr: 0.5 }} />}
+              {params.value}
+            </Box>
+          );
+        },
       },
+
       {
         field: 'codeName',
         headerName: '그룹코드명',

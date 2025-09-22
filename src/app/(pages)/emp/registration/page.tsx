@@ -239,7 +239,7 @@ export default function EmpPage() {
         }
       );
 
-      const resValid = verifyRes.data.data?.[0]?.valid;
+      const resValid = (verifyRes.data.data?.[0] as any)?.valid;
 
       if (resValid == '02') {
         notifyError(setSnackbar, '해당 정보로 등록된 사업자정보를 확인할 수 없습니다.');
@@ -397,14 +397,14 @@ export default function EmpPage() {
                   accept="image/*"
                   onFileChange={file => {
                     if (file) {
-                      console.log('📂 파일 선택됨:', file.name);
+                      //console.log('📂 파일 선택됨:', file.name);
                       setFile(file);
-                      setHasError(prev => ({
-                        ...prev,
-                        bizRegistrationUrl: selectedFile,
-                      }));
+                      // setHasError(prev => ({
+                      //   ...prev,
+                      //   bizRegistrationUrl: selectedFile,
+                      // }));
                     } else {
-                      console.log('🗑 파일 삭제됨');
+                      //console.log('🗑 파일 삭제됨');
                       setFile(null as any);
                     }
                   }}

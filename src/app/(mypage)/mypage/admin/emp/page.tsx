@@ -1,6 +1,6 @@
 'use client';
 
-import { DataGrid, GridColDef, GridToolbarContainer, GridToolbarExport } from '@mui/x-data-grid';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Paper, Button, TextField, MenuItem, Link, Stack } from '@mui/material';
 import { useEffect, useState, useMemo } from 'react';
 import api from '@/api/axios';
@@ -166,19 +166,7 @@ export default function CompanyRequestTable() {
         loading={loading}
         checkboxSelection
         disableRowSelectionOnClick
-        components={{
-          Toolbar: CustomToolbar,
-        }}
       />
     </Paper>
-  );
-}
-
-// 엑셀 다운로드 버튼 있는 툴바
-function CustomToolbar() {
-  return (
-    <GridToolbarContainer>
-      <GridToolbarExport />
-    </GridToolbarContainer>
   );
 }
