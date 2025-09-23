@@ -5,9 +5,9 @@ import { Box, Stack, Typography } from '@mui/material';
 import MainButtonArea from '@/components/mainBtn/mainButtonArea';
 import FilterPanel from '@/components/mainBtn/filterPanel';
 import AddIcon from '@mui/icons-material/Add';
-import RegionTabs from '@/app/(mainPages)/sample/mainBtnArea/filter/regionTabs';
-import BasicFilters from '@/app/(mainPages)/sample/mainBtnArea/filter/basicFilters';
-import ProvinceList from '@/app/(mainPages)/sample/mainBtnArea/filter/provinceList';
+import RegionTabs from '@/app/(mainpages)/sample/mainBtnArea/filter/regionTabs';
+import BasicFilters from '@/app/(mainpages)/sample/mainBtnArea/filter/basicFilters';
+import ProvinceList from '@/app/(mainpages)/sample/mainBtnArea/filter/provinceList';
 
 export default function Page() {
   const [keyword, setKeyword] = useState('');
