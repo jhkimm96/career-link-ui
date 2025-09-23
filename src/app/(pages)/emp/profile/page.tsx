@@ -241,7 +241,14 @@ export default function EmpProfileViewPage() {
               ].filter(Boolean) as string[];
 
               return (
-                <Grid item xs={12} md={6} key={jp.jobPostingId}>
+                <Box
+                  key={jp.jobPostingId}
+                  sx={{
+                    width: { xs: '100%', md: '50%' },
+                    p: 1,
+                    boxSizing: 'border-box',
+                  }}
+                >
                   <Card variant="outlined" sx={{ height: '100%' }}>
                     <CardActionArea onClick={() => handleOpenPosting(jp.jobPostingId)}>
                       <CardContent>
@@ -262,7 +269,7 @@ export default function EmpProfileViewPage() {
                       </CardContent>
                     </CardActionArea>
                   </Card>
-                </Grid>
+                </Box>
               );
             })}
           </Grid>
