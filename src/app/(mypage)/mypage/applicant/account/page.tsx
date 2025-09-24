@@ -91,7 +91,7 @@ export default function AccountPage() {
       try {
         await api.post('/applicant/account/withdraw');
         notifySuccess(setSnackbar, '회원탈퇴가 완료되었습니다.');
-        await api.post('/api/users/logout');
+        await api.post('/users/logout');
         localStorage.removeItem('accessToken');
         setIsLoggedIn(false);
         setRemainingTime(0);

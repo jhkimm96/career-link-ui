@@ -47,7 +47,7 @@ export default function FindPwdForm() {
     if (cooldown > 0) return;
 
     try {
-      const res = await api.post<SendVerificationCodeResponse>('/api/users/send-pwd-code', {
+      const res = await api.post<SendVerificationCodeResponse>('/users/send-pwd-code', {
         userName,
         email,
         loginId,
@@ -86,7 +86,7 @@ export default function FindPwdForm() {
 
   const handleFindPwd = async () => {
     try {
-      const res = await api.post<FindIdResponse>('/api/users/verify-pwd-code', {
+      const res = await api.post<FindIdResponse>('/users/verify-pwd-code', {
         userName,
         email,
         loginId,
