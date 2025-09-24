@@ -32,7 +32,7 @@ export default function AppHeaderIconIsLogined() {
 
   const handleExtendSession = async () => {
     try {
-      const res = await api.post<ReissueResponse>('/users/reissue', {});
+      const res = await api.post<ReissueResponse>('/api/users/reissue', {});
       const newAccessToken = res.data.accessToken;
       const newAccessTokenExpiresAt = res.data.accessTokenExpiresAt;
 
@@ -54,7 +54,7 @@ export default function AppHeaderIconIsLogined() {
 
   const handleLogout = async () => {
     try {
-      await api.post('/users/logout');
+      await api.post('/api/users/logout');
       localStorage.removeItem('accessToken');
       setIsLoggedIn(false);
       setRemainingTime(0);

@@ -42,7 +42,7 @@ export default function SessionWatcher({ children }: Props) {
     const checkSession = async () => {
       if (remainingTime <= 0) {
         try {
-          await api.post('/users/logout');
+          await api.post('/api/users/logout');
         } catch (error) {
           console.error('로그아웃 API 호출 실패:', error);
         } finally {

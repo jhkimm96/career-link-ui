@@ -18,7 +18,7 @@ export default function ReactivatePage() {
   const sendOtp = async () => {
     try {
       setLoading(true);
-      await api.post('/users/reactivate/request', { loginId });
+      await api.post('/api/users/reactivate/request', { loginId });
       setSent(true);
       notifySuccess(() => {}, '회원정보로 등록된 이메일로 인증코드를 전송했습니다.');
     } catch (e: any) {
@@ -31,7 +31,7 @@ export default function ReactivatePage() {
   const verifyOtp = async () => {
     try {
       setLoading(true);
-      await api.post('/users/reactivate/verify', { loginId, code }); // 휴면 해제
+      await api.post('/api/users/reactivate/verify', { loginId, code }); // 휴면 해제
       notifySuccess(() => {}, '휴면 해제가 완료되었습니다. 다시 로그인해주세요.');
       router.push('/login');
     } catch (e: any) {

@@ -8,7 +8,7 @@ export async function imageApi(
   form.append('file', file);
   form.append('uploadType', uploadType);
 
-  const res = await api.post('/s3/upload', form, {
+  const res = await api.post('/api/s3/upload', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 
