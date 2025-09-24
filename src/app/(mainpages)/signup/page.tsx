@@ -232,7 +232,7 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await api.get<CheckIdResponse>(`/users/check-id?loginId=${loginId}`);
+      const response = await api.get<CheckIdResponse>(`/api/users/check-id?loginId=${loginId}`);
 
       if (response.data.exists) {
         setHelperText(prev => ({ ...prev, loginId: '이미 사용중인 아이디입니다.' }));
@@ -268,7 +268,7 @@ export default function SignupPage() {
 
         payload = { email };
 
-        url = '/users/send-email-code';
+        url = '/api/users/send-email-code';
       }
 
       if (type === 'phone') {
@@ -283,7 +283,7 @@ export default function SignupPage() {
           return;
         }
         payload = { phoneNumber: phone };
-        url = '/users/send-sms';
+        url = '/api/users/send-sms';
       }
 
       const res = await api.post(url, payload);
@@ -304,7 +304,7 @@ export default function SignupPage() {
           notifyError(setSnackbar, '이메일 또는 인증번호를 확인해 주세요.');
           return;
         }
-        url = '/users/verify-email-code';
+        url = '/api/users/verify-email-code';
         payload = { email: formData.email };
       } else if (isPhoneAuth) {
         if (!formData.phoneNumber || !verifyCode) {
@@ -312,7 +312,7 @@ export default function SignupPage() {
           return;
         }
 
-        url = '/users/verify-phone-code';
+        url = '/api/users/verify-phone-code';
         payload = { phoneNumber: formData.phoneNumber.replace(/\D/g, '') };
       } else {
         notifyError(setSnackbar, '인증 방식을 선택해 주세요.');
@@ -361,7 +361,7 @@ export default function SignupPage() {
 
     try {
       const response = await api.post(
-        '/users/signup',
+        '/api/users/signup',
         {
           loginId: formData.loginId,
           password: formData.password,

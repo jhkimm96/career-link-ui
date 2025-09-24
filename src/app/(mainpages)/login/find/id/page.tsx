@@ -45,7 +45,7 @@ export default function FindIdForm() {
     if (cooldown > 0) return;
 
     try {
-      const res = await api.post<SendVerificationCodeResponse>('/users/send-id-code', {
+      const res = await api.post<SendVerificationCodeResponse>('/api/users/send-id-code', {
         userName,
         email,
       });
@@ -83,7 +83,7 @@ export default function FindIdForm() {
 
   const handleFindId = async () => {
     try {
-      const res = await api.post<FindIdResponse>('/users/verify-id-code', {
+      const res = await api.post<FindIdResponse>('/api/users/verify-id-code', {
         userName,
         email,
         code,

@@ -53,7 +53,7 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      const res = await api.post<LoginResponse>('/users/login', {
+      const res = await api.post<LoginResponse>('/api/users/login', {
         loginId,
         password,
       });
