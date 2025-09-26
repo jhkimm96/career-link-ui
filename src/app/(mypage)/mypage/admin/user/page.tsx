@@ -121,7 +121,7 @@ export default function UserPage() {
 
   useEffect(() => {
     getUsers();
-  }, [usersPagination, usersSortModel, role]);
+  }, [usersPagination, usersSortModel]);
 
   const getUsers = async () => {
     try {

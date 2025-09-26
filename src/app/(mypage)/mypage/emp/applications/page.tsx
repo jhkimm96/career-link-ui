@@ -212,7 +212,7 @@ export default function EmployerApplicationsPage() {
 
   const headerActions = (
     <Stack direction="row" spacing={1} alignItems="center">
-      {/* ✅ Autocomplete로 공고 검색 + 선택 */}
+      {/* 공고 검색 + 선택 */}
       <Autocomplete
         options={jobPostings}
         getOptionLabel={(option: JobPostingDto) => option.title}
