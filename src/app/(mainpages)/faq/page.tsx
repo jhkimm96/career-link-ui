@@ -34,7 +34,7 @@ export default function FaqPage() {
   }>({ open: false, message: '', severity: 'info' });
 
   const [faqs, setFaqs] = useState<Faq[]>([]);
-  const categoryMap = useCommonCodeMap('FAQ_CATEGORY', 'CATEGORY');
+  const categoryMap = useCommonCodeMap('FAQ', 'CATEGORY');
   const entries = Object.entries(categoryMap);
   const [category, setCategory] = useState(entries[0]?.[0]);
   const [expandedFaqId, setExpandedFaqId] = useState<number | null>(null);
