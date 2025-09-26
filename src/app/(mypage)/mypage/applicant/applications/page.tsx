@@ -19,6 +19,7 @@ import PageSectionLayout from '@/components/layouts/mypage/pageSectionLayout';
 import NotificationSnackbar from '@/components/snackBar';
 import { notifyError, notifySuccess, closeSnackbar } from '@/api/apiNotify';
 import api from '@/api/axios';
+import dayjs from 'dayjs';
 
 type ApplicationListItem = {
   applicationId: number;
@@ -216,7 +217,7 @@ export default function ApplicationListPage() {
                   {app.companyName}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  지원일: {app.appliedAt}
+                  지원일시 : {dayjs(app.appliedAt).format('YYYY-MM-DD HH:mm')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   제출 이력서: {app.resumeTitle}
