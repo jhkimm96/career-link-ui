@@ -19,12 +19,15 @@ import api from '@/api/axios';
 import { closeSnackbar, notifyError } from '@/api/apiNotify';
 import useCommonCodeMap from '@/components/selectBox/commonCodeMap';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/libs/authContext';
+import CampaignIcon from '@mui/icons-material/Campaign';
+import SettingsIcon from '@mui/icons-material/Settings';
+import WorkIcon from '@mui/icons-material/Work';
 
 interface NoticeDto {
   noticeId: number;
   noticeType: string;
   title: string;
-  writerId: string;
   viewCount: number;
   isTopFixed: string;
   isExposed: string;
@@ -32,10 +35,12 @@ interface NoticeDto {
   endDate?: string | null;
   createdAt: string;
   updatedAt: string;
+  thumbnailUrl?: string | null;
 }
 
 export default function CommonNoticePage() {
   const router = useRouter();
+  const { role } = useAuth(); // 관리자 구분
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -49,6 +54,13 @@ export default function CommonNoticePage() {
   // 공통코드 매핑
   const noticeTypeMap = useCommonCodeMap('NOTICE', 'TYPE');
   const sortOrderMap = useCommonCodeMap('NOTICE', 'SORT_ORD');
+
+  // 유형별 아이콘 매핑
+  const noticeTypeIconMap: Record<string, React.ReactNode> = {
+    GENERAL: <CampaignIcon fontSize="small" color="primary" />,
+    SYSTEM: <SettingsIcon fontSize="small" color="action" />,
+    RECRUIT: <WorkIcon fontSize="small" color="success" />,
+  };
 
   //공지사항 조회
   const fetchNotices = useCallback(async () => {
@@ -111,7 +123,7 @@ export default function CommonNoticePage() {
           </Stack>
         </Paper>
 
-        {/* 카드 리스트 (Flexbox) */}
+        {/* 카드 리스트 */}
         <Box
           sx={{
             display: 'grid',
@@ -124,22 +136,42 @@ export default function CommonNoticePage() {
               key={notice.noticeId}
               variant="outlined"
               sx={{
-                height: 220, // 카드 세로 크기 고정
                 display: 'flex',
                 flexDirection: 'column',
               }}
             >
-              <CardContent sx={{ flexGrow: 1, overflow: 'hidden' }}>
-                <Box display="flex" justifyContent="space-between" mb={1}>
-                  <Chip
-                    label={noticeTypeMap[notice.noticeType] || notice.noticeType}
-                    size="small"
+              {/* 썸네일 이미지 (없으면 기본 이미지 백엔드에서 내려줌) */}
+              {notice.thumbnailUrl && (
+                <Box sx={{ width: '100%', height: 160, overflow: 'hidden' }}>
+                  <img
+                    src={notice.thumbnailUrl}
+                    alt="공지사항 썸네일"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
                   />
-                  {notice.isTopFixed === 'Y' && (
+                </Box>
+              )}
+
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Box display="flex" justifyContent="space-between" mb={1}>
+                  <Stack direction="row" spacing={0.5} alignItems="center">
+                    {noticeTypeIconMap[notice.noticeType]}
+                    <Chip
+                      label={noticeTypeMap[notice.noticeType] || notice.noticeType}
+                      size="small"
+                    />
+                  </Stack>
+
+                  {/* 관리자만 '상단고정' Chip 표시 */}
+                  {role === 'ADMIN' && notice.isTopFixed === 'Y' && (
                     <Chip label="상단고정" size="small" color="warning" />
                   )}
                 </Box>
 
+                {/* 제목 */}
                 <Typography
                   variant="h6"
                   gutterBottom
@@ -152,12 +184,14 @@ export default function CommonNoticePage() {
                   {notice.title}
                 </Typography>
 
+                {/* 작성자 + 조회수 */}
                 <Typography variant="body2" color="text.secondary" noWrap>
-                  작성자: {notice.writerId}
+                  작성자: CareerLink / 📊 {notice.viewCount}회
                 </Typography>
 
+                {/* 노출기간 */}
                 <Typography variant="caption" color="text.secondary">
-                  {notice.startDate ?? '-'} ~ {notice.endDate ?? '무기한'}
+                  📅 {notice.startDate ?? '-'} ~ {notice.endDate ?? '무기한'}
                 </Typography>
               </CardContent>
 

@@ -17,6 +17,7 @@ export default function NoticeCreatePage() {
     message: '',
     severity: 'info' as 'success' | 'error' | 'warning' | 'info',
   });
+
   const [form, setForm] = useState<NoticeFormData>({
     noticeId: 0,
     noticeType: '',
@@ -28,7 +29,17 @@ export default function NoticeCreatePage() {
     isExposed: 'Y',
   });
 
-  const { selectedFile, setFile } = useS3Upload({ uploadType: 'NOTICE_FILE' });
+  // 썸네일 업로드 (미리보기 포함)
+  const {
+    selectedFile: thumbnailFile,
+    setFile: setThumbnailFile,
+    previewUrl: thumbnailPreview,
+  } = useS3Upload({ uploadType: 'NOTICE_FILE' });
+
+  // 첨부파일 업로드
+  const { selectedFile: attachmentFile, setFile: setAttachmentFile } = useS3Upload({
+    uploadType: 'NOTICE_FILE',
+  });
 
   const handleSubmit = async () => {
     if (!form.noticeType) {
@@ -39,12 +50,15 @@ export default function NoticeCreatePage() {
       notifyInfo(setSnackbar, '제목을 입력해주세요.');
       return;
     }
+
     try {
       const formData = new FormData();
       formData.append('dto', new Blob([JSON.stringify(form)], { type: 'application/json' }));
-      if (selectedFile) formData.append('file', selectedFile);
 
-      const res = await api.post('/admin/saveNotice', formData, {
+      if (thumbnailFile) formData.append('thumbnailFile', thumbnailFile);
+      if (attachmentFile) formData.append('attachmentFile', attachmentFile);
+
+      const res = await api.post('/admin/notice/saveNotice', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
@@ -60,18 +74,24 @@ export default function NoticeCreatePage() {
         <NoticeForm
           form={form}
           setForm={setForm}
-          fileName={selectedFile?.name}
-          onFileChange={file => {
-            if (file) setFile(file);
-            else setFile(null as any);
-          }}
+          thumbnailName={thumbnailFile?.name}
+          thumbnailPreview={thumbnailPreview} // 미리보기 전달
+          onThumbnailChange={file =>
+            file ? setThumbnailFile(file) : setThumbnailFile(null as any)
+          }
+          attachmentName={attachmentFile?.name}
+          onAttachmentChange={file =>
+            file ? setAttachmentFile(file) : setAttachmentFile(null as any)
+          }
           onSubmit={handleSubmit}
         />
+
         <NotificationSnackbar
           open={snackbar.open}
           message={snackbar.message}
           severity={snackbar.severity}
           onClose={() => closeSnackbar(setSnackbar)}
+          bottom="10px"
         />
       </Box>
     </PagesSectionLayout>

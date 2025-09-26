@@ -28,8 +28,11 @@ export interface NoticeFormData {
 interface NoticeFormProps {
   form: NoticeFormData;
   setForm: React.Dispatch<React.SetStateAction<NoticeFormData>>;
-  fileName?: string;
-  onFileChange: (file: File | null) => void;
+  thumbnailName?: string;
+  thumbnailPreview?: string | null; // ✅ 미리보기 URL
+  onThumbnailChange: (file: File | null) => void;
+  attachmentName?: string;
+  onAttachmentChange: (file: File | null) => void;
   onSubmit: () => void;
   isEdit?: boolean;
 }
@@ -37,8 +40,11 @@ interface NoticeFormProps {
 export default function NoticeForm({
   form,
   setForm,
-  fileName,
-  onFileChange,
+  thumbnailName,
+  thumbnailPreview,
+  onThumbnailChange,
+  attachmentName,
+  onAttachmentChange,
   onSubmit,
   isEdit = false,
 }: NoticeFormProps) {
@@ -70,6 +76,7 @@ export default function NoticeForm({
           size="small"
         />
 
+        {/* 내용 */}
         <Box>
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
             내용
@@ -91,11 +98,35 @@ export default function NoticeForm({
           </Box>
         </Box>
 
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, pl: 1 }}>
+          업로드하지 않으면 기본 썸네일이 적용됩니다.
+        </Typography>
+
+        {/* 썸네일 업로드 */}
         <FileUpload
-          label="파일 선택"
+          label="썸네일 이미지"
+          accept="image/*"
+          fileName={thumbnailName ?? ''}
+          onFileChange={onThumbnailChange}
+        />
+
+        {/* 썸네일 미리보기 */}
+        {thumbnailPreview && (
+          <Box mt={1}>
+            <img
+              src={thumbnailPreview}
+              alt="썸네일 미리보기"
+              style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8 }}
+            />
+          </Box>
+        )}
+
+        {/* 첨부파일 업로드 */}
+        <FileUpload
+          label="첨부파일"
           accept="*"
-          fileName={fileName ?? ''}
-          onFileChange={onFileChange}
+          fileName={attachmentName ?? ''}
+          onFileChange={onAttachmentChange}
         />
 
         <Box display="flex" gap={2}>
