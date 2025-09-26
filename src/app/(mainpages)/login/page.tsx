@@ -3,21 +3,20 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+  type AlertColor,
   Box,
   Button,
+  Divider,
+  IconButton,
+  InputAdornment,
+  Stack,
   TextField,
   Typography,
-  Stack,
-  InputAdornment,
-  IconButton,
-  Divider,
-  type AlertColor,
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import api from '@/api/axios';
 import { useAuth } from '@/libs/authContext';
-import { jwtDecode } from 'jwt-decode';
 import PagesSectionLayout from '@/components/layouts/pagesSectionLayout';
 import Image from 'next/image';
 import GoogleIconButton from '@/components/googleLoginIcon';
@@ -26,13 +25,9 @@ import NotificationSnackbar from '@/components/snackBar';
 import { closeSnackbar, notifyError, notifySuccess } from '@/api/apiNotify';
 
 interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
   accessTokenExpiresAt: number;
   role: string;
 }
-
-type JwtPayload = { role?: string };
 
 const LoginPage: React.FC = () => {
   const [loginId, setLoginId] = useState('');
@@ -53,19 +48,14 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      const res = await api.post<LoginResponse>('/api/users/login', {
+      await api.post<LoginResponse>('/api/users/login', {
         loginId,
         password,
       });
 
-      localStorage.setItem('accessToken', res.data.accessToken);
-      const expiresAt = Date.now() + res.data.accessTokenExpiresAt;
-      localStorage.setItem('accessTokenExpiresAt', expiresAt.toString());
-
-      signIn(res.data.accessToken, res.data.accessTokenExpiresAt);
+      await signIn(); // 쿠키 기반 로그인 반영
       notifySuccess(setSnackbar, '로그인되었습니다.');
       router.push('/main');
-      return res.data;
     } catch (err: any) {
       notifyError(setSnackbar, err.message);
       if (err.code === 'ACCOUNT_DORMANT') {

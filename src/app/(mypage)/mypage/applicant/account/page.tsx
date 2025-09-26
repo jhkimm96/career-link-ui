@@ -23,7 +23,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 export default function AccountPage() {
   const router = useRouter();
-  const { setIsLoggedIn, setRemainingTime } = useAuth();
+  const { signOut } = useAuth();
   const [mode, setMode] = useState<'profile' | 'password'>('profile');
   const [profile, setProfile] = useState<ApplicantDto | null>(null);
   const [snackbar, setSnackbar] = useState({
@@ -91,10 +91,7 @@ export default function AccountPage() {
       try {
         await api.post('/applicant/account/withdraw');
         notifySuccess(setSnackbar, '회원탈퇴가 완료되었습니다.');
-        await api.post('/api/users/logout');
-        localStorage.removeItem('accessToken');
-        setIsLoggedIn(false);
-        setRemainingTime(0);
+        await signOut();
         router.push('/main');
       } catch (err: any) {
         notifyError(setSnackbar, err.message);

@@ -4,65 +4,61 @@ import React, { useEffect, useRef, useState } from 'react';
 import api from '@/api/axios';
 import SessionModal from './SessionModal';
 import { useAuth } from '@/libs/authContext';
+import { useRouter } from 'next/navigation';
 
-interface Props {
-  children: React.ReactNode;
-}
+type Props = { children: React.ReactNode };
 
 export default function SessionWatcher({ children }: Props) {
+  const { isLoggedIn, remainingTime, setIsLoggedIn, setRemainingTime, signIn } = useAuth();
   const [showModal, setShowModal] = useState(false);
+
+  const actingRef = useRef(false);
   const dismissedRef = useRef(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
-  const { isLoggedIn, setIsLoggedIn, remainingTime, setRemainingTime } = useAuth();
-
-  // 1초마다 남은 시간을 절대시각 기준으로 재계산
   useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      const expiresAt = localStorage.getItem('accessTokenExpiresAt');
-      if (!expiresAt) {
-        setRemainingTime(0);
-        return;
-      }
+    if (!isLoggedIn) {
+      setShowModal(false);
+      actingRef.current = false;
+      dismissedRef.current = false;
+      return;
+    }
 
-      const now = Date.now();
-      const remaining = Math.floor((+expiresAt - now) / 1000);
-      setRemainingTime(remaining > 0 ? remaining : 0);
-    }, 1000);
+    if (remainingTime <= 0) {
+      if (actingRef.current) return;
+      actingRef.current = true;
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [setRemainingTime]);
-
-  // 남은 시간 상태에 따른 세션 처리
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    const checkSession = async () => {
-      if (remainingTime <= 0) {
+      (async () => {
         try {
-          await api.post('/api/users/logout');
-        } catch (error) {
-          console.error('로그아웃 API 호출 실패:', error);
-        } finally {
-          localStorage.removeItem('accessToken');
-          setIsLoggedIn(false);
-          setShowModal(false);
-          setRemainingTime(0);
-          dismissedRef.current = false;
-        }
-      } else if (remainingTime <= 120) {
-        if (dismissedRef.current) return;
-
-        setShowModal(true);
-      } else {
+          await api.post('/api/users/logout'); // 쿠키 만료
+        } catch {}
+        setIsLoggedIn(false);
+        setRemainingTime(0);
         setShowModal(false);
-      }
-    };
+        dismissedRef.current = false;
+        router.push('/main');
+        actingRef.current = false;
+      })();
 
-    checkSession().catch(err => console.error('checkSession 실패:', err));
-  }, [remainingTime, isLoggedIn, setIsLoggedIn]);
+      return;
+    }
+
+    if (remainingTime <= 120) {
+      if (!dismissedRef.current) setShowModal(true);
+    } else {
+      setShowModal(false);
+      dismissedRef.current = false;
+    }
+  }, [isLoggedIn, remainingTime, setIsLoggedIn, setRemainingTime, signIn, router]);
+
+  const handleExtend = async () => {
+    try {
+      await api.post('/api/users/reissue');
+      await signIn();
+      setShowModal(false);
+      dismissedRef.current = false;
+    } catch {}
+  };
 
   return (
     <>
@@ -73,6 +69,7 @@ export default function SessionWatcher({ children }: Props) {
           setShowModal(false);
           dismissedRef.current = true;
         }}
+        onExtend={handleExtend}
       />
     </>
   );

@@ -15,7 +15,7 @@ interface PasswordChangeFormProps {
 }
 
 export default function PasswordChangeForm({ url, onCancel }: PasswordChangeFormProps) {
-  const { setIsLoggedIn, setRemainingTime } = useAuth();
+  const { setIsLoggedIn, setRemainingTime, signOut } = useAuth();
   const router = useRouter();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -40,10 +40,7 @@ export default function PasswordChangeForm({ url, onCancel }: PasswordChangeForm
         newPassword,
       });
       notifySuccess(setSnackbar, '비밀번호가 성공적으로 변경되었습니다.');
-      await api.post('/api/users/logout');
-      localStorage.removeItem('accessToken');
-      setIsLoggedIn(false);
-      setRemainingTime(0);
+      await signOut();
       router.push('/main');
     } catch (err: any) {
       notifyError(setSnackbar, err.message);

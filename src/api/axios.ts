@@ -26,13 +26,13 @@ const api = axios.create({
 
 // request: 토큰 헤더 주입
 api.interceptors.request.use(config => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers = config.headers ?? {};
-      (config.headers as any).Authorization = `Bearer ${token}`;
-    }
-  }
+  // if (typeof window !== 'undefined') {
+  //   const token = localStorage.getItem('accessToken');
+  //   if (token) {
+  //     config.headers = config.headers ?? {};
+  //     (config.headers as any).Authorization = `Bearer ${token}`;
+  //   }
+  // }
   return config;
 });
 

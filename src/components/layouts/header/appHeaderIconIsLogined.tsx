@@ -8,14 +8,9 @@ import api from '@/api/axios';
 
 import { IconButton, Button, Menu, MenuItem, Paper, Typography, Box } from '@mui/material';
 
-interface ReissueResponse {
-  accessToken: string;
-  accessTokenExpiresAt: number;
-}
-
 export default function AppHeaderIconIsLogined() {
   const router = useRouter();
-  const { setIsLoggedIn, remainingTime, setRemainingTime } = useAuth();
+  const { remainingTime, signIn, signOut } = useAuth();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -32,36 +27,16 @@ export default function AppHeaderIconIsLogined() {
 
   const handleExtendSession = async () => {
     try {
-      const res = await api.post<ReissueResponse>('/api/users/reissue', {});
-      const newAccessToken = res.data.accessToken;
-      const newAccessTokenExpiresAt = res.data.accessTokenExpiresAt;
-
-      if (newAccessToken) {
-        const expiresAt = Date.now() + newAccessTokenExpiresAt;
-        localStorage.setItem('accessToken', newAccessToken);
-        localStorage.setItem('accessTokenExpiresAt', expiresAt.toString());
-
-        setIsLoggedIn(true);
-        const now = Date.now();
-        const remaining = Math.floor((+expiresAt - now) / 1000);
-        setRemainingTime(remaining > 0 ? remaining : 0);
-      }
+      await api.post('/api/users/reissue');
+      await signIn();
     } catch (e) {
       console.error('세션 연장 실패', e);
-      handleLogout();
     }
   };
 
   const handleLogout = async () => {
-    try {
-      await api.post('/api/users/logout');
-      localStorage.removeItem('accessToken');
-      setIsLoggedIn(false);
-      setRemainingTime(0);
-      router.push('/main');
-    } catch (e) {
-      console.error('로그아웃 실패', e);
-    }
+    await signOut();
+    router.push('/main');
   };
 
   const formatTime = (seconds: number) => {
