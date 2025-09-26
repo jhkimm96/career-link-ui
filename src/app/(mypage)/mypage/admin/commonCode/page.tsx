@@ -684,7 +684,11 @@ export default function Page() {
           slotProps={{
             input: {
               startAdornment: (
-                <InputAdornment position="start">
+                <InputAdornment
+                  position="start"
+                  onClick={getParentCodes}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <SearchIcon />
                 </InputAdornment>
               ),
