@@ -113,6 +113,7 @@ export default function ResumeListPage() {
           message={snackbar.message}
           severity={snackbar.severity}
           onClose={() => closeSnackbar(setSnackbar)}
+          bottom="10px"
         />
       </Stack>
     </PageSectionLayout>

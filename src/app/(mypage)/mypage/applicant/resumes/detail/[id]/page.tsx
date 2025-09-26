@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   Chip,
-  CircularProgress,
   Divider,
   Stack,
   Typography,
@@ -27,7 +26,6 @@ export default function ResumeDetailPage() {
   const confirm = useConfirm();
 
   const [resume, setResume] = useState<ResumeDto | null>(null);
-  const [loading, setLoading] = useState(true);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -44,8 +42,6 @@ export default function ResumeDetailPage() {
       setResume(res.data);
     } catch (err: any) {
       notifyError(setSnackbar, err.message || '이력서를 불러오지 못했습니다.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -70,14 +66,6 @@ export default function ResumeDetailPage() {
       notifyError(setSnackbar, err.message);
     }
   };
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   if (!resume) {
     return (
@@ -261,6 +249,7 @@ export default function ResumeDetailPage() {
           message={snackbar.message}
           severity={snackbar.severity}
           onClose={() => closeSnackbar(setSnackbar)}
+          bottom="10px"
         />
       </Stack>
     </PageSectionLayout>

@@ -9,8 +9,10 @@ import api from '@/api/axios';
 import NotificationSnackbar from '@/components/snackBar';
 import { notifySuccess, notifyError, closeSnackbar, notifyInfo } from '@/api/apiNotify';
 import { Box, Button } from '@mui/material';
+import { useConfirm } from '@/components/confirm';
 
 export default function CoverLetterEditPage() {
+  const confirm = useConfirm();
   const params = useParams();
   const coverLetterId = params.id as string;
   const router = useRouter();
@@ -26,7 +28,6 @@ export default function CoverLetterEditPage() {
     message: '',
     severity: 'info' as 'info' | 'success' | 'error' | 'warning',
   });
-  const [loading, setLoading] = useState(false);
 
   // 데이터 로드
   useEffect(() => {
@@ -55,16 +56,20 @@ export default function CoverLetterEditPage() {
       notifyInfo(setSnackbar, '항목의 제목과 내용을 모두 입력해주세요.');
       return;
     }
-
-    try {
-      setLoading(true);
-      await api.put(`/applicant/coverLetter/updateCoverLetter/${coverLetterId}`, coverLetter);
-      notifySuccess(setSnackbar, '자소서가 수정되었습니다.');
-      router.push('/mypage/applicant/cover-letters');
-    } catch (err: any) {
-      notifyError(setSnackbar, err.message);
-    } finally {
-      setLoading(false);
+    const isConfirmed = await confirm({
+      title: '저장하시겠습니까?',
+      message: '자기소개서 내용을 수정합니다.',
+      confirmText: '저장',
+      cancelText: '취소',
+    });
+    if (isConfirmed) {
+      try {
+        await api.put(`/applicant/coverLetter/updateCoverLetter/${coverLetterId}`, coverLetter);
+        notifySuccess(setSnackbar, '자소서가 수정되었습니다.');
+        router.push('/mypage/applicant/cover-letters');
+      } catch (err: any) {
+        notifyError(setSnackbar, err.message);
+      }
     }
   };
 
@@ -72,7 +77,7 @@ export default function CoverLetterEditPage() {
     <PageSectionLayout
       title="자기소개서 수정"
       actions={
-        <Button variant="contained" onClick={handleSave} disabled={loading}>
+        <Button variant="contained" onClick={handleSave}>
           저장
         </Button>
       }

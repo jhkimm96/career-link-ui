@@ -157,21 +157,26 @@ export default function ResumeForm({ url, initialData, onSuccess }: ResumeFormPr
       notifyInfo(setSnackbar, validateMsg);
       return;
     }
-
-    const isConfirmed = await confirm({
-      title: '저장하시겠습니까?',
-      message: '이력서 정보를 저장합니다.',
-      confirmText: '저장',
-      cancelText: '취소',
-    });
-    if (isConfirmed) {
-      try {
-        const method = url.includes('/updateResume') ? 'put' : 'post';
-        await api[method](url, filteredResume);
-        notifySuccess(setSnackbar, '이력서가 저장되었습니다.');
-        onSuccess?.();
-      } catch (err: any) {
-        notifyError(setSnackbar, err.message);
+    const isEdit = url.includes('/updateResume');
+    const method = isEdit ? 'put' : 'post';
+    if (isEdit) {
+      const isConfirmed = await confirm({
+        title: '저장하시겠습니까?',
+        message: '이력서 정보를 저장합니다.',
+        confirmText: '저장',
+        cancelText: '취소',
+      });
+      if (isConfirmed) {
+        try {
+          await api[method](url, filteredResume);
+          notifySuccess(
+            setSnackbar,
+            isEdit ? '이력서가 저장되었습니다.' : '이력서가 등록되었습니다.'
+          );
+          onSuccess?.();
+        } catch (err: any) {
+          notifyError(setSnackbar, err.message);
+        }
       }
     }
   };
@@ -181,7 +186,7 @@ export default function ResumeForm({ url, initialData, onSuccess }: ResumeFormPr
       title="이력서 작성"
       actions={
         <Button variant="contained" size="small" onClick={handleSave}>
-          {url.includes('/resumes/') ? '저장' : '등록'}
+          {url.includes('/updateResume/') ? '저장' : '등록'}
         </Button>
       }
     >
