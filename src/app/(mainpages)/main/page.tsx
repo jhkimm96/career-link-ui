@@ -1,29 +1,28 @@
 'use client';
 
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import api from '@/api/axios';
 import {
+  Avatar,
   Box,
+  Button,
   Card,
-  CardHeader,
-  CardContent,
+  CardActionArea,
   CardActions,
-  Typography,
+  CardContent,
+  CardHeader,
   Chip,
   Divider,
-  Stack,
-  Skeleton,
-  Avatar,
-  Tooltip,
   IconButton,
-  CardActionArea,
-  Button,
+  Stack,
+  Tooltip,
+  Typography,
 } from '@mui/material';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/libs/authContext';
+import Banner from '@/components/layouts/banner';
 
 const TOP_APPLIED_API = '/main/job-postings';
 const FEATURED_EMPLOYERS_API = '/main/employers';
@@ -392,6 +391,10 @@ export default function MainTopSections() {
 
   return (
     <Box>
+      {/*  Hero 배너 (페이지 상단에 고정) */}
+      <Box sx={{ mb: 5 }}>
+        <Banner />
+      </Box>
       {/* TOP 12: 지원자 수 많은 공고 */}
       <Box sx={{ mb: 5 }}>
         <Stack

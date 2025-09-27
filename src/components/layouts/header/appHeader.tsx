@@ -106,12 +106,12 @@ export default function AppHeader() {
                   {IconComp && <IconComp fontSize="small" />}
                   {menu.menuPath && !hasChildren ? (
                     <Link href={menu.menuPath}>
-                      <Typography variant="body2" sx={{ color: 'inherit', textDecoration: 'none' }}>
+                      <Typography variant="body1" sx={{ color: 'inherit', textDecoration: 'none' }}>
                         {menu.menuName}
                       </Typography>
                     </Link>
                   ) : (
-                    <Typography variant="body2">{menu.menuName}</Typography>
+                    <Typography variant="body1">{menu.menuName}</Typography>
                   )}
 
                   {openMenu === menu.menuId && hasChildren && (
