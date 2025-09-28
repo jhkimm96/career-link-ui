@@ -149,7 +149,7 @@ const LoginPage: React.FC = () => {
         </Box>
       </Box>
       <Box display="flex" justifyContent="center" alignItems="center" flex={1} p={2}>
-        <Image src="/cardImg.png" alt="logo" width={400} height={200} />
+        <Image src="/cardImg_new.png" alt="logo" width={400} height={200} />
       </Box>
       <NotificationSnackbar
         open={snackbar.open}

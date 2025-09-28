@@ -1,5 +1,6 @@
 'use client';
 
+import { useSocialLogin } from '@/hooks/useSocialLogin';
 import { Button, styled } from '@mui/material';
 import SvgIcon from '@mui/material/SvgIcon';
 
@@ -82,8 +83,15 @@ function GoogleSvgIcon() {
 }
 
 export default function GoogleIconButton() {
+  const { loginWithGoogle } = useSocialLogin();
+
   return (
-    <GoogleButton disableRipple startIcon={<GoogleSvgIcon />} className="gsi-material-button">
+    <GoogleButton
+      disableRipple
+      startIcon={<GoogleSvgIcon />}
+      className="gsi-material-button"
+      onClick={loginWithGoogle}
+    >
       <span className="roboto-title">Google 로그인</span>
       <span className="button-state" />
     </GoogleButton>
