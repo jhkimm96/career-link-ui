@@ -6,6 +6,7 @@ import ScrollToTopButton from '@/components/layouts/scrollToTopButton';
 import { AuthProvider } from '@/libs/authContext';
 import SessionWatcher from '@/components/SessionWatcher';
 import { ConfirmProvider } from '@/components/confirm';
+import ThemeRegistry from '@/components/layouts/ThemeRegistry';
 
 export const metadata: Metadata = {
   title: 'Career Link',
@@ -16,15 +17,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <body>
-        <ConfirmProvider>
-          <AuthProvider>
-            <SessionWatcher>
-              <ScrollToTopRoute />
-              {children}
-              <ScrollToTopButton />
-            </SessionWatcher>
-          </AuthProvider>
-        </ConfirmProvider>
+        <ThemeRegistry>
+          <ConfirmProvider>
+            <AuthProvider>
+              <SessionWatcher>
+                <ScrollToTopRoute />
+                {children}
+                <ScrollToTopButton />
+              </SessionWatcher>
+            </AuthProvider>
+          </ConfirmProvider>
+        </ThemeRegistry>
       </body>
     </html>
   );

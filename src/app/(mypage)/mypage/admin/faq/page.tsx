@@ -38,7 +38,7 @@ type EditableFaq = Faq & { isEditing?: boolean };
 export default function AdminFaqPage() {
   const confirm = useConfirm();
   const [faqs, setFaqs] = useState<EditableFaq[]>([]);
-  const categoryMap = useCommonCodeMap('FAQ_CATEGORY', 'CATEGORY');
+  const categoryMap = useCommonCodeMap('FAQ', 'CATEGORY');
   const entries = Object.entries(categoryMap); // map: Record<string, string>
   const [category, setCategory] = useState(entries[0]?.[0] ?? '');
   const [form, setForm] = useState<Faq | null>(null);
@@ -132,7 +132,7 @@ export default function AdminFaqPage() {
   const headerActions = (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <CommonSelectBox
-        groupCode="FAQ_CATEGORY"
+        groupCode="FAQ"
         parentCode="CATEGORY"
         label="카테고리"
         value={category}
@@ -171,7 +171,7 @@ export default function AdminFaqPage() {
             </Typography>
             <Stack spacing={2}>
               <CommonSelectBox
-                groupCode="FAQ_CATEGORY"
+                groupCode="FAQ"
                 parentCode="CATEGORY"
                 value={form.category}
                 label="카테고리"

@@ -36,12 +36,17 @@ export default function Footer() {
         </Typography>
 
         <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 1 }}>
-          <Link href="#" underline="hover" color="text.secondary">
-            이용약관 (준비중)
+          <Link
+            href="/legal/careerlinkTermsOfService.html"
+            underline="hover"
+            color="text.secondary"
+          >
+            이용약관
           </Link>
-          <Link href="#" underline="hover" color="text.secondary">
-            개인정보처리방침 (준비중)
+          <Link href="/legal/marketing-terms.html" underline="hover" color="text.secondary">
+            개인정보처리방침
           </Link>
+          <Link href="#" underline="hover" color="text.secondary"></Link>
           <Link
             href="https://github.com/hha6571/career-link"
             target="_blank"

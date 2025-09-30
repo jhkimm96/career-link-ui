@@ -66,6 +66,7 @@ export default function ResumeEditPage() {
         message={snackbar.message}
         severity={snackbar.severity}
         onClose={() => closeSnackbar(setSnackbar)}
+        bottom="10px"
       />
     </>
   );

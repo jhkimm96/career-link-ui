@@ -15,7 +15,6 @@ import {
   Stack,
   TextField,
   Typography,
-  IconButton,
   Button,
   Autocomplete,
 } from '@mui/material';
@@ -178,18 +177,26 @@ export default function EmployerApplicationsPage() {
 
   const handleSaveAll = async () => {
     if (!hasUnsaved) return false;
-    try {
-      const payload = Object.entries(editedRows).map(([id, status]) => ({
-        applicationId: Number(id),
-        status,
-      }));
-      await api.put('/emp/applications/status', payload);
-      notifySuccess(setSnackbar, '저장되었습니다.');
-      await getApplications();
-      return true;
-    } catch (e: any) {
-      notifyError(setSnackbar, e.message);
-      return false;
+    const isConfirmed = await confirm({
+      title: '저장하시겠습니까?',
+      message: '지원자의 지원서 상태정보를 수정합니다.',
+      confirmText: '저장',
+      cancelText: '취소',
+    });
+    if (isConfirmed) {
+      try {
+        const payload = Object.entries(editedRows).map(([id, status]) => ({
+          applicationId: Number(id),
+          status,
+        }));
+        await api.put('/emp/applications/status', payload);
+        notifySuccess(setSnackbar, '저장되었습니다.');
+        await getApplications();
+        return true;
+      } catch (e: any) {
+        notifyError(setSnackbar, e.message);
+        return false;
+      }
     }
   };
 
@@ -212,7 +219,7 @@ export default function EmployerApplicationsPage() {
 
   const headerActions = (
     <Stack direction="row" spacing={1} alignItems="center">
-      {/* ✅ Autocomplete로 공고 검색 + 선택 */}
+      {/* 공고 검색 + 선택 */}
       <Autocomplete
         options={jobPostings}
         getOptionLabel={(option: JobPostingDto) => option.title}
@@ -233,10 +240,12 @@ export default function EmployerApplicationsPage() {
         slotProps={{
           input: {
             startAdornment: (
-              <InputAdornment position="start">
-                <IconButton onClick={() => confirmUnsaved(getApplications)} edge="start">
-                  <SearchIcon />
-                </IconButton>
+              <InputAdornment
+                position="start"
+                onClick={() => confirmUnsaved(getApplications)}
+                sx={{ cursor: 'pointer' }}
+              >
+                <SearchIcon />
               </InputAdornment>
             ),
           },
@@ -281,7 +290,14 @@ export default function EmployerApplicationsPage() {
           pagination
           disableColumnMenu
           rowHeight={44}
-          onRowClick={params => setPreview({ applicationId: params.row.applicationId })}
+          onCellClick={(params, event) => {
+            if (params.field === 'status') {
+              event.stopPropagation(); // RowClick 막기
+            }
+          }}
+          onRowClick={params => {
+            setPreview({ applicationId: params.row.applicationId });
+          }}
           sx={{
             border: 'none',
             '& .MuiDataGrid-virtualScroller': {

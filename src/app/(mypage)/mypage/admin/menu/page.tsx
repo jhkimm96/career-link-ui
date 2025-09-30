@@ -6,11 +6,6 @@ import {
   Button,
   TextField,
   Autocomplete,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  SelectChangeEvent,
   Typography,
   ListItemIcon,
   createFilterOptions,
@@ -34,16 +29,15 @@ import { ICON_MAP, ICON_NAMES, getMenuIcon } from '@/components/icons';
 
 const iconFilter = createFilterOptions<string>({ matchFrom: 'any', stringify: o => o });
 
-export type AccessRole = 'PUBLIC' | 'ADMIN' | 'EMP' | 'USER';
 export interface MenuDto {
-  menuId: number | string; // 신규는 'NEW_...' 문자열
-  parentId: number | null; // 항상 실제 숫자 ID만 허용 (신규 상위 밑 하위 추가 금지)
+  menuId: number | string;
+  parentId: number | null;
   menuName: string;
   menuPath: string;
   level: number;
   displayOrder: number;
   isActive: string;
-  accessRole: AccessRole;
+  accessRole: string;
   icon?: string;
   isTemp?: boolean;
 }
@@ -83,8 +77,8 @@ export default function MenuPage() {
   const [menus, setMenus] = useState<MenuDto[]>([]);
   const [serverSnapshot, setServerSnapshot] = useState<MenuDto[]>([]);
   const [deletedIds, setDeletedIds] = useState<Set<number>>(new Set());
-  const [filterRole, setFilterRole] = useState<AccessRole>('PUBLIC');
-  const [selectedId, setSelectedId] = useState<string | null>(null); // 항상 string 비교
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string>(''); // 헤더에서 선택한 권한
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -93,8 +87,9 @@ export default function MenuPage() {
   const nameRef = useRef<HTMLInputElement>(null);
   const notifyClose = () => closeSnackbar(setSnackbar);
 
-  // 초기 조회
-  const fetchMenus = async (role: AccessRole) => {
+  // 서버에서 메뉴 조회 (권한별)
+  const fetchMenus = async (role: string) => {
+    if (!role) return;
     try {
       const res = await api.get<MenuDto[]>('/admin/menu', { params: { accessRole: role } });
       setMenus(res.data);
@@ -106,12 +101,12 @@ export default function MenuPage() {
   };
 
   useEffect(() => {
-    (async () => {
-      await fetchMenus(filterRole);
-    })();
-  }, [filterRole]);
+    if (selectedRole) {
+      fetchMenus(selectedRole);
+    }
+  }, [selectedRole]);
 
-  // 파생
+  // 표시할 메뉴
   const visibleMenus = useMemo(
     () => menus.filter(m => !deletedIds.has(Number(m.menuId)) && m.isActive === 'Y'),
     [menus, deletedIds]
@@ -157,29 +152,29 @@ export default function MenuPage() {
 
   // 추가
   const handleAdd = () => {
+    if (!selectedRole) {
+      notifyInfo(setSnackbar, '먼저 권한을 선택하세요.');
+      return;
+    }
     const parent = selectedId ? menus.find(m => String(m.menuId) === selectedId) : null;
-
-    // ⛔ 부모가 NEW_* 면 금지
     if (parent && typeof parent.menuId !== 'number') {
       notifyInfo(setSnackbar, '상위 메뉴를 먼저 저장해 주세요.');
       return;
     }
-
-    const parentId = parent ? (parent.menuId as number) : null; // ★ 숫자만 허용
+    const parentId = parent ? (parent.menuId as number) : null;
     const level: 1 | 2 = parent ? 2 : 1;
-
     const siblings = menus.filter(m => m.parentId === parentId);
     const nextOrder = siblings.length ? Math.max(...siblings.map(s => s.displayOrder)) + 1 : 1;
 
     const newItem: MenuDto = {
       menuId: `NEW_${Date.now()}`,
-      parentId, // ★ 여기엔 반드시 number | null
+      parentId,
       menuName: '',
       menuPath: '',
       level,
       displayOrder: nextOrder,
       isActive: 'Y',
-      accessRole: filterRole,
+      accessRole: selectedRole,
       icon: '',
       isTemp: true,
     };
@@ -188,7 +183,7 @@ export default function MenuPage() {
     setSelectedId(String(newItem.menuId));
   };
 
-  // 삭제(상위면 하위 포함)
+  // 삭제
   const handleDelete = async () => {
     if (!selectedId) return;
     const target = menus.find(m => String(m.menuId) === selectedId);
@@ -204,7 +199,7 @@ export default function MenuPage() {
     });
     if (!ok) return;
 
-    const idsToDelete = new Set<string>(); // string으로 모아두고
+    const idsToDelete = new Set<string>();
     idsToDelete.add(String(target.menuId));
     if (target.level === 1) {
       menus.forEach(m => {
@@ -214,9 +209,7 @@ export default function MenuPage() {
       });
     }
 
-    // 상태에서 제거
     setMenus(prev => prev.filter(m => !idsToDelete.has(String(m.menuId))));
-    // 기존(숫자)만 삭제집합에 누적
     setDeletedIds(prev => {
       const next = new Set(prev);
       idsToDelete.forEach(idStr => {
@@ -232,7 +225,7 @@ export default function MenuPage() {
   const handleSave = async () => {
     const inserts = menus
       .filter(m => typeof m.menuId === 'string')
-      .map(({ isTemp, menuId, ...rest }) => rest); // ★ parentId 포함해서 그대로 보냄
+      .map(({ isTemp, menuId, ...rest }) => rest);
 
     const updates = menus
       .filter(m => {
@@ -259,26 +252,10 @@ export default function MenuPage() {
       setDeletedIds(new Set());
       setSelectedId(null);
       notifySuccess(setSnackbar, res.message);
-      await fetchMenus(filterRole);
+      await fetchMenus(selectedRole);
     } catch (e: any) {
       notifyError(setSnackbar, e.message);
     }
-  };
-
-  const handleRoleChange = async (e: SelectChangeEvent) => {
-    const next = e.target.value as AccessRole;
-    if (next === filterRole) return;
-    if (isDirty) {
-      const ok = await confirm({
-        message: '저장하지 않은 변경 사항이 있습니다. 계속하시겠습니까?',
-        confirmText: '예',
-        cancelText: '아니오',
-      });
-      if (!ok) return;
-    }
-    setFilterRole(next);
-    setSelectedId(null);
-    setDeletedIds(new Set());
   };
 
   // 트리 선택
@@ -330,20 +307,15 @@ export default function MenuPage() {
   // 헤더
   const headerActions = (
     <Stack direction="row" alignItems="center" spacing={1}>
-      <FormControl size="small" sx={{ minWidth: 180 }}>
-        <InputLabel id="preview-role-label">미리보기 권한</InputLabel>
-        <Select
-          labelId="preview-role-label"
-          value={filterRole}
-          onChange={handleRoleChange}
-          label="미리보기 권한"
-        >
-          <MenuItem value="PUBLIC">공개</MenuItem>
-          <MenuItem value="ADMIN">관리자</MenuItem>
-          <MenuItem value="EMP">기업</MenuItem>
-          <MenuItem value="USER">지원자</MenuItem>
-        </Select>
-      </FormControl>
+      {/* 권한 선택 */}
+      <CommonSelectBox
+        label="권한"
+        groupCode="MENU"
+        parentCode="ROLE"
+        value={selectedRole}
+        onChange={setSelectedRole}
+        fullWidth={false}
+      />
 
       <Button
         size="small"
@@ -443,10 +415,10 @@ export default function MenuPage() {
         <TextField size="small" label="레벨" value={selected?.level ?? 1} disabled />
         <CommonSelectBox
           label="접근권한"
-          groupCode="MENU_ROLE"
+          groupCode="MENU"
           parentCode="ROLE"
-          value={selected?.accessRole ?? filterRole}
-          onChange={v => patchSelected({ accessRole: v as AccessRole })}
+          value={selected?.accessRole ?? selectedRole}
+          onChange={v => patchSelected({ accessRole: v })}
           disabled
         />
         <Autocomplete
@@ -457,7 +429,7 @@ export default function MenuPage() {
           value={selected?.icon ?? ''}
           onChange={(_, val) => patchSelected({ icon: val ?? '' })}
           renderOption={(props, option) => {
-            const { key, ...rest } = props; // key 분리
+            const { key, ...rest } = props;
             const IconComp = getMenuIcon(option);
             return (
               <li key={key} {...rest}>

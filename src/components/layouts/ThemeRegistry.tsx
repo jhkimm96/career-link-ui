@@ -14,6 +14,9 @@ const themeOptions: ThemeOptions = {
   typography: {
     fontFamily: 'Noto Sans KR, sans-serif',
     fontSize: 13,
+    fontWeightRegular: 500, // 기본 weight 굵게
+    fontWeightMedium: 600, // medium 굵게
+    fontWeightBold: 700, // bold 굵게
   },
   shadows: Array(25).fill('none') as ThemeOptions['shadows'],
 };

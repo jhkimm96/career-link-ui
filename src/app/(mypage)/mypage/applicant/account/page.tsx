@@ -9,6 +9,10 @@ import {
   Stack,
   TextField,
   Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from '@mui/material';
 import PasswordChangeForm from '@/components/form/passwordChangeForm';
 import PageSectionLayout from '@/components/layouts/mypage/pageSectionLayout';
@@ -23,7 +27,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 export default function AccountPage() {
   const router = useRouter();
-  const { setIsLoggedIn, setRemainingTime } = useAuth();
+  const { signOut } = useAuth();
   const [mode, setMode] = useState<'profile' | 'password'>('profile');
   const [profile, setProfile] = useState<ApplicantDto | null>(null);
   const [snackbar, setSnackbar] = useState({
@@ -31,6 +35,7 @@ export default function AccountPage() {
     message: '',
     severity: 'info' as 'info' | 'success' | 'error' | 'warning',
   });
+  const [openMarketingDialog, setOpenMarketingDialog] = useState(false);
 
   const confirm = useConfirm();
 
@@ -91,10 +96,7 @@ export default function AccountPage() {
       try {
         await api.post('/applicant/account/withdraw');
         notifySuccess(setSnackbar, '회원탈퇴가 완료되었습니다.');
-        await api.post('/api/users/logout');
-        localStorage.removeItem('accessToken');
-        setIsLoggedIn(false);
-        setRemainingTime(0);
+        await signOut();
         router.push('/main');
       } catch (err: any) {
         notifyError(setSnackbar, err.message);
@@ -141,7 +143,7 @@ export default function AccountPage() {
               </Typography>
 
               <Stack spacing={2}>
-                <TextField label="이름" value={profile.loginId} size="small" fullWidth disabled />
+                <TextField label="아이디" value={profile.loginId} size="small" fullWidth disabled />
                 <TextField label="이름" value={profile.userName} size="small" fullWidth disabled />
                 <TextField label="이메일" value={profile.email} size="small" fullWidth disabled />
                 <TextField
@@ -152,30 +154,64 @@ export default function AccountPage() {
                   onChange={handlePhoneChange}
                 />
                 <Stack spacing={0.5} alignItems="flex-start">
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={profile.agreeMarketing === 'Y'}
-                        onChange={(_, checked) =>
-                          setProfile(prev =>
-                            prev ? { ...prev, agreeMarketing: checked ? 'Y' : 'N' } : prev
-                          )
-                        }
-                      />
-                    }
-                    label="[선택] 마케팅 정보 수신 동의"
-                  />
-
-                  {profile.agreeMarketing === 'Y' && (
-                    <Stack direction="row" spacing={1} sx={{ pl: 6 }}>
-                      <InfoOutlinedIcon fontSize="small" color="info" />
-                      <Typography variant="body2" color="text.secondary">
-                        SMS, 문자메세지를 통해 다양한 소식을 받아보실 수 있습니다.
-                      </Typography>
-                    </Stack>
-                  )}
+                  <Stack direction="row" alignItems="center">
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={profile.agreeMarketing === 'Y'}
+                          onChange={(_, checked) =>
+                            setProfile(prev =>
+                              prev ? { ...prev, agreeMarketing: checked ? 'Y' : 'N' } : prev
+                            )
+                          }
+                        />
+                      }
+                      label="[선택] 마케팅 정보 수신 동의"
+                    />
+                    <Button
+                      onClick={() => setOpenMarketingDialog(true)}
+                      size="small"
+                      sx={{ textTransform: 'none', ml: 1 }}
+                    >
+                      상세 보기
+                    </Button>
+                  </Stack>
                 </Stack>
               </Stack>
+
+              <Dialog
+                open={openMarketingDialog}
+                onClose={() => setOpenMarketingDialog(false)}
+                maxWidth="md"
+                fullWidth
+              >
+                <DialogTitle>마케팅 정보 수신 동의</DialogTitle>
+                <DialogContent dividers sx={{ p: 0, height: { xs: '60vh', md: 480 } }}>
+                  <Box
+                    component="iframe"
+                    src="/legal/marketing-terms.html" // public/legal/marketing-consent.html
+                    title="마케팅 정보 수신 동의"
+                    width="100%"
+                    height="100%"
+                    loading="lazy"
+                    style={{ border: 0, display: 'block' }}
+                  />
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => setOpenMarketingDialog(false)} variant="contained">
+                    확인
+                  </Button>
+                  <Button
+                    component="a"
+                    href="/legal/marketing-consent.html"
+                    target="_blank"
+                    rel="noopener"
+                    sx={{ textTransform: 'none' }}
+                  >
+                    새 창에서 보기
+                  </Button>
+                </DialogActions>
+              </Dialog>
 
               <Box mt={2} textAlign="right">
                 <Button variant="contained" color="primary" onClick={handleSave}>
