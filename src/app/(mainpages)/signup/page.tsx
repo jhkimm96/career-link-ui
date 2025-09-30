@@ -266,7 +266,7 @@ export default function SignupPage() {
           return;
         }
 
-        payload = { email };
+        payload = { email: email, userName: formData.userName };
 
         url = '/api/users/send-email-code';
       }

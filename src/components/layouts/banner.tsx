@@ -82,7 +82,7 @@ export default function Banner() {
               )}
 
               {/* 텍스트 */}
-              <Box sx={{ maxWidth: 400 }}>
+              <Box sx={{ maxWidth: 410 }}>
                 <Typography
                   variant="h4"
                   fontWeight={900}

@@ -397,14 +397,21 @@ export default function EmpPage() {
                   accept="image/*"
                   onFileChange={file => {
                     if (file) {
-                      //console.log('📂 파일 선택됨:', file.name);
                       setFile(file);
-                      // setHasError(prev => ({
-                      //   ...prev,
-                      //   bizRegistrationUrl: selectedFile,
-                      // }));
+                      setHasError(prev => ({
+                        ...prev,
+                        bizRegistrationUrl: false,
+                      }));
                     } else {
-                      //console.log('🗑 파일 삭제됨');
+                      setFile(null as any);
+                      setHasError(prev => ({
+                        ...prev,
+                        bizRegistrationUrl: true,
+                      }));
+                      setFormData(prev => ({
+                        ...prev,
+                        bizRegistrationUrl: '',
+                      }));
                       setFile(null as any);
                     }
                   }}

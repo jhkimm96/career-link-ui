@@ -778,6 +778,8 @@ export default function JobPostingPage() {
                     transform: 'translateY(-4px)',
                     boxShadow: '0 14px 34px rgba(0,0,0,0.12)',
                   },
+                  position: 'relative',
+                  pb: 6,
                 }}
               >
                 <CardActionArea
@@ -936,14 +938,22 @@ export default function JobPostingPage() {
 
                   <Divider sx={{ borderColor: 'transparent' }} />
 
-                  <CardActions sx={{ justifyContent: 'flex-end' }}>
+                  {/*<CardActions sx={{ justifyContent: 'flex-end' }}>*/}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0, // 하단에서 고정 (값 조정 가능)
+                      right: 16, // 오른쪽 정렬
+                    }}
+                  >
                     <Typography
                       variant="body2"
                       sx={{ color: isOpenEnded ? 'success.main' : 'text.secondary' }}
                     >
                       마감: {isOpenEnded ? '상시모집' : fmtDate(row.deadline)}
                     </Typography>
-                  </CardActions>
+                  </Box>
+                  {/*</CardActions>*/}
                 </CardActionArea>
               </Card>
             );

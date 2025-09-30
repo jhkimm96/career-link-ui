@@ -415,7 +415,7 @@ export default function AdminDashboardPage() {
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <Typography variant="h4" fontWeight={700} mb={3}>
-        관리자
+        기업관리자
       </Typography>
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} textColor="primary" indicatorColor="primary">
