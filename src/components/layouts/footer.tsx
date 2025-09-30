@@ -43,7 +43,7 @@ export default function Footer() {
           >
             이용약관
           </Link>
-          <Link href="#" underline="hover" color="text.secondary">
+          <Link href="/legal/marketing-terms.html" underline="hover" color="text.secondary">
             개인정보처리방침
           </Link>
           <Link href="#" underline="hover" color="text.secondary"></Link>
