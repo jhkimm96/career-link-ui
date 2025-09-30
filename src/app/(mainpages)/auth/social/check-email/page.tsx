@@ -20,7 +20,7 @@ export default function CheckEmailPage() {
       </ol>
 
       <button
-        className="mt-6 rounded px-4 py-2 border"
+        className="mt-6 rounded px-4 py-2 border cursor-pointer disabled:cursor-not-allowed"
         onClick={async () => {
           await fetch(
             new URL('/api/auth/link/resend', process.env.NEXT_PUBLIC_API_BASE_URL!).toString(),

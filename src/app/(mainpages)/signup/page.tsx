@@ -653,17 +653,34 @@ export default function SignupPage() {
                 maxWidth="sm"
                 fullWidth
               >
-                <DialogTitle>서비스 이용약관 동의 안내</DialogTitle>{' '}
-                <DialogContent dividers>
-                  <Typography variant="body2" paragraph>
-                    서비스 이용 약관 상세 내용이 여기에 들어갑니다. 예를 들어, 회원의 의무, 서비스
-                    제공 조건 등... ...
-                  </Typography>
+                <DialogTitle>서비스 이용약관 동의 안내</DialogTitle>
+                <DialogContent dividers sx={{ p: 0, height: { xs: '60vh', md: 480 } }}>
+                  <Box
+                    component="iframe"
+                    src="/legal/careerlinkTermsOfService.html"
+                    title="서비스 이용약관 동의 안내"
+                    width="100%"
+                    height="100%"
+                    loading="lazy"
+                    style={{ border: 0, display: 'block' }}
+                  />
                 </DialogContent>
                 <DialogActions>
-                  <Button onClick={() => handleCloseDialog('terms')} variant="contained">
-                    확인
-                  </Button>
+                  <DialogActions>
+                    <Button onClick={() => handleCloseDialog('terms')} variant="contained">
+                      확인
+                    </Button>
+
+                    <Button
+                      component="a"
+                      href="/legal/careerlinkTermsOfService.html"
+                      target="_blank"
+                      rel="noopener"
+                      sx={{ textTransform: 'none' }}
+                    >
+                      새 창에서 보기
+                    </Button>
+                  </DialogActions>
                 </DialogActions>
               </Dialog>
 
@@ -687,6 +704,7 @@ export default function SignupPage() {
               >
                 상세 보기
               </Button>
+
               {hasError.agreePrivacy && (
                 <FormHelperText error>개인정보 수집 및 이용 동의는 필수입니다.</FormHelperText>
               )}
@@ -698,17 +716,32 @@ export default function SignupPage() {
                 fullWidth
               >
                 <DialogTitle>개인정보 수집 및 이용 안내</DialogTitle>
-                <DialogContent dividers>
-                  <Typography variant="body2" paragraph>
-                    1. 수집 항목: 이름, 연락처, 이메일 등<br /> 2. 수집 목적: 회원 가입, 서비스
-                    제공, 고객 응대 <br /> 3. 보유 기간: 회원 탈퇴 시까지 또는 법령에 따른 보관기간
-                    <br /> 4. 개인정보 제공 거부 시 서비스 이용에 제한이 있을 수 있습니다. <br />
-                    ...
-                  </Typography>
+
+                <DialogContent dividers sx={{ p: 0, height: { xs: '60vh', md: 480 } }}>
+                  <Box
+                    component="iframe"
+                    src="/legal/privacy-terms.html"
+                    title="개인정보 수집 및 이용 안내"
+                    width="100%"
+                    height="100%"
+                    loading="lazy"
+                    style={{ border: 0, display: 'block' }}
+                  />
                 </DialogContent>
+
                 <DialogActions>
                   <Button onClick={() => handleCloseDialog('privacy')} variant="contained">
                     확인
+                  </Button>
+
+                  <Button
+                    component="a"
+                    href="/legal/privacy-terms.html"
+                    target="_blank"
+                    rel="noopener"
+                    sx={{ textTransform: 'none' }}
+                  >
+                    새 창에서 보기
                   </Button>
                 </DialogActions>
               </Dialog>
@@ -739,15 +772,33 @@ export default function SignupPage() {
                 maxWidth="sm"
                 fullWidth
               >
-                <DialogTitle>[선택] 마케팅 정보 수신 동의 안내</DialogTitle>
-                <DialogContent dividers>
-                  <Typography variant="body2" paragraph>
-                    SMS, 문자메세지 수신동의
-                  </Typography>
+                <DialogTitle>마케팅 정보 수신 동의 안내</DialogTitle>
+
+                <DialogContent dividers sx={{ p: 0, height: { xs: '60vh', md: 480 } }}>
+                  <Box
+                    component="iframe"
+                    src="/legal/marketing-terms.html"
+                    title="마케팅 정보 수신 동의 안내"
+                    width="100%"
+                    height="100%"
+                    loading="lazy"
+                    style={{ border: 0, display: 'block' }}
+                  />
                 </DialogContent>
+
                 <DialogActions>
                   <Button onClick={() => handleCloseDialog('marketing')} variant="contained">
                     확인
+                  </Button>
+
+                  <Button
+                    component="a"
+                    href="/legal/marketing-terms.html"
+                    target="_blank"
+                    rel="noopener"
+                    sx={{ textTransform: 'none' }}
+                  >
+                    새 창에서 보기
                   </Button>
                 </DialogActions>
               </Dialog>

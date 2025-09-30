@@ -17,6 +17,10 @@ import {
   Select,
   TextField,
   Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import NotificationSnackbar from '@/components/snackBar';
 import { closeSnackbar, notifyError, notifySuccess } from '@/api/apiNotify';
@@ -63,6 +67,23 @@ export default function SocialOnboardingPage() {
   const [helperText, setHelperText] = useState({ phoneNumber: '' });
   const [hasError, setHasError] = useState({ phoneNumber: false });
 
+  const [openDialog, setOpenDialog] = useState({
+    terms: false,
+    privacy: false,
+    marketing: false,
+  });
+
+  const open = (key: 'terms' | 'privacy' | 'marketing') =>
+    setOpenDialog(prev => ({ ...prev, [key]: true }));
+  const close = (key: 'terms' | 'privacy' | 'marketing') =>
+    setOpenDialog(prev => ({ ...prev, [key]: false }));
+
+  // 파일 경로(공통)
+  const LEGAL = {
+    terms: '/legal/careerlinkTermsOfService.html',
+    privacy: '/legal/privacy-terms.html',
+    marketing: '/legal/marketing-terms.html',
+  };
   // 날짜 셀렉트
   const currentYear = new Date().getFullYear();
   const years = useMemo(
@@ -373,7 +394,7 @@ export default function SocialOnboardingPage() {
                   }
                   label="[필수] 서비스 이용약관 동의"
                 />
-                <Button onClick={() => {}} size="small" sx={{ textTransform: 'none' }}>
+                <Button onClick={() => open('terms')} size="small" sx={{ textTransform: 'none' }}>
                   상세 보기
                 </Button>
               </Box>
@@ -392,7 +413,7 @@ export default function SocialOnboardingPage() {
                   }
                   label="[필수] 개인정보 수집 및 이용 동의"
                 />
-                <Button onClick={() => {}} size="small" sx={{ textTransform: 'none' }}>
+                <Button onClick={() => open('privacy')} size="small" sx={{ textTransform: 'none' }}>
                   상세 보기
                 </Button>
               </Box>
@@ -411,11 +432,114 @@ export default function SocialOnboardingPage() {
                   }
                   label="[선택] 마케팅 정보 수신 동의"
                 />
-                <Button onClick={() => {}} size="small" sx={{ textTransform: 'none' }}>
+                <Button
+                  onClick={() => open('marketing')}
+                  size="small"
+                  sx={{ textTransform: 'none' }}
+                >
                   상세 보기
                 </Button>
               </Box>
             </Box>
+
+            <Dialog open={openDialog.terms} onClose={() => close('terms')} maxWidth="md" fullWidth>
+              <DialogTitle>서비스 이용약관</DialogTitle>
+              <DialogContent dividers sx={{ p: 0, height: { xs: '60vh', md: 480 } }}>
+                <Box
+                  component="iframe"
+                  src={LEGAL.terms}
+                  title="서비스 이용약관"
+                  width="100%"
+                  height="100%"
+                  loading="lazy"
+                  style={{ border: 0, display: 'block' }}
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => close('terms')} variant="contained">
+                  확인
+                </Button>
+                <Button
+                  component="a"
+                  href={LEGAL.terms}
+                  target="_blank"
+                  rel="noopener"
+                  sx={{ textTransform: 'none' }}
+                >
+                  새 창에서 보기
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* 개인정보 수집·이용 동의 다이얼로그 */}
+            <Dialog
+              open={openDialog.privacy}
+              onClose={() => close('privacy')}
+              maxWidth="md"
+              fullWidth
+            >
+              <DialogTitle>개인정보 수집 및 이용 동의</DialogTitle>
+              <DialogContent dividers sx={{ p: 0, height: { xs: '60vh', md: 480 } }}>
+                <Box
+                  component="iframe"
+                  src={LEGAL.privacy}
+                  title="개인정보 수집 및 이용 동의"
+                  width="100%"
+                  height="100%"
+                  loading="lazy"
+                  style={{ border: 0, display: 'block' }}
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => close('privacy')} variant="contained">
+                  확인
+                </Button>
+                <Button
+                  component="a"
+                  href={LEGAL.privacy}
+                  target="_blank"
+                  rel="noopener"
+                  sx={{ textTransform: 'none' }}
+                >
+                  새 창에서 보기
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* 마케팅 정보 수신 동의 다이얼로그 */}
+            <Dialog
+              open={openDialog.marketing}
+              onClose={() => close('marketing')}
+              maxWidth="md"
+              fullWidth
+            >
+              <DialogTitle>마케팅 정보 수신 동의</DialogTitle>
+              <DialogContent dividers sx={{ p: 0, height: { xs: '60vh', md: 480 } }}>
+                <Box
+                  component="iframe"
+                  src={LEGAL.marketing}
+                  title="마케팅 정보 수신 동의"
+                  width="100%"
+                  height="100%"
+                  loading="lazy"
+                  style={{ border: 0, display: 'block' }}
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => close('marketing')} variant="contained">
+                  확인
+                </Button>
+                <Button
+                  component="a"
+                  href={LEGAL.marketing}
+                  target="_blank"
+                  rel="noopener"
+                  sx={{ textTransform: 'none' }}
+                >
+                  새 창에서 보기
+                </Button>
+              </DialogActions>
+            </Dialog>
 
             <Box display="flex" gap={2} mt={3}>
               <Button type="submit" variant="contained" fullWidth>
