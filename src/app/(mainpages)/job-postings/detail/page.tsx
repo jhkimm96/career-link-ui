@@ -49,6 +49,7 @@ type JobPostingResponse = {
   salaryCode: string | null;
   applicationDeadline: string | null;
   isActive: 'Y' | 'N' | string;
+  scrapped?: boolean;
 };
 
 const formatDate = (value?: string | null) => {
@@ -73,7 +74,10 @@ export default function JobPostingDetailPage() {
   const [err, setErr] = useState<string | null>(null);
   const [codeNameMap, setCodeNameMap] = useState<Record<string, string>>({});
 
-  // 지원 다이얼로그 상태
+  // === 스크랩 상태 ===
+  const [bookmarked, setBookmarked] = useState(false);
+
+  // === 지원 다이얼로그 관련 상태 ===
   const [applyOpen, setApplyOpen] = useState(false);
   const [resumes, setResumes] = useState<ResumeDto[]>([]);
   const [coverLetters, setCoverLetters] = useState<CoverLetterDto[]>([]);
@@ -131,6 +135,7 @@ export default function JobPostingDetailPage() {
         });
         if (!mounted) return;
         setDetail(data);
+        setBookmarked(data.scrapped ?? false);
 
         await fetchCodes();
       } catch (e: any) {
@@ -144,7 +149,7 @@ export default function JobPostingDetailPage() {
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [id, isLoggedIn]);
 
   const chips = useMemo(() => {
     if (!detail) return [];
@@ -168,6 +173,35 @@ export default function JobPostingDetailPage() {
     return list;
   }, [detail, codeNameMap]);
 
+  // === 스크랩 토글 ===
+  const toggleBookmark = async () => {
+    if (!isLoggedIn) {
+      const isConfirmed = await confirm({
+        title: '로그인이 필요합니다',
+        message: '스크랩 기능은 로그인 후 사용 가능합니다. 로그인 페이지로 이동하시겠습니까?',
+        confirmText: '로그인',
+        cancelText: '취소',
+      });
+      if (isConfirmed) router.push('/login');
+      return;
+    }
+
+    try {
+      if (bookmarked) {
+        await api.delete(`/job/scrap/removeScrap/${id}`);
+        setBookmarked(false);
+        notifySuccess(setSnackbar, '스크랩이 해제되었습니다.');
+      } else {
+        await api.post(`/job/scrap/addScrap/${id}`);
+        setBookmarked(true);
+        notifySuccess(setSnackbar, '스크랩에 추가되었습니다.');
+      }
+    } catch (e: any) {
+      notifyError(setSnackbar, e?.message ?? '스크랩 처리 중 오류가 발생했습니다.');
+    }
+  };
+
+  // === 지원하기 관련 ===
   const openApplyModal = async () => {
     if (!isLoggedIn) {
       const isConfirmed = await confirm({
@@ -263,6 +297,8 @@ export default function JobPostingDetailPage() {
             chips={chips}
             deadline={detail?.applicationDeadline ?? null}
             onApply={openApplyModal}
+            bookmarked={bookmarked}
+            onToggleBookmark={toggleBookmark}
           />
         </Box>
 
@@ -477,13 +513,18 @@ function RightStickyCard({
   chips,
   deadline,
   onApply,
+  bookmarked,
+  onToggleBookmark,
 }: {
   loading: boolean;
   companyName?: string | null;
   chips: string[];
   deadline: string | null;
   onApply: () => void;
+  bookmarked: boolean;
+  onToggleBookmark: () => void;
 }) {
+  const { role } = useAuth();
   const router = useRouter();
   return (
     <Card
@@ -545,16 +586,29 @@ function RightStickyCard({
               </Typography>
             </Box>
 
-            <Button
-              variant="contained"
-              size="large"
-              fullWidth
-              onClick={onApply}
-              disableElevation
-              sx={{ py: 1.2, fontWeight: 700 }}
-            >
-              지원하기
-            </Button>
+            {/* 지원 + 스크랩 버튼 */}
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="contained"
+                size="large"
+                fullWidth
+                onClick={onApply}
+                disableElevation
+                sx={{ py: 1.2, fontWeight: 700 }}
+              >
+                지원하기
+              </Button>
+              {role === 'USER' && (
+                <Button
+                  variant={bookmarked ? 'outlined' : 'contained'}
+                  color={bookmarked ? 'warning' : 'inherit'}
+                  onClick={onToggleBookmark}
+                  sx={{ minWidth: 56 }}
+                >
+                  {bookmarked ? '★' : '☆'}
+                </Button>
+              )}
+            </Stack>
           </>
         )}
       </CardContent>

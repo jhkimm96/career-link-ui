@@ -23,6 +23,7 @@ import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import { useRouter } from 'next/navigation';
 import Banner from '@/components/layouts/banner';
+import { useAuth } from '@/libs/authContext';
 
 const TOP_APPLIED_API = '/main/job-postings';
 const FEATURED_EMPLOYERS_API = '/main/employers';
@@ -40,6 +41,7 @@ export type TopJob = {
   salary?: string | null;
   deadline?: string | null;
   appCount: number;
+  scrapped: boolean;
 };
 
 export type EmployerMini = {
@@ -81,17 +83,16 @@ const dday = (d?: string | null) => {
 
 function JobCard({
   row,
-  isBookmarked,
   onToggleBookmark,
   onOpen,
 }: {
   row: TopJob;
-  isBookmarked: boolean;
-  onToggleBookmark: (jobId: number) => void;
+  onToggleBookmark: (jobId: number, scrapped: boolean) => void | Promise<void>;
   onOpen: (jobId: number) => void;
 }) {
   const leftDays = dday(row.deadline);
   const isOpenEnded = !row.deadline;
+  const { role } = useAuth();
 
   return (
     <Card
@@ -145,17 +146,19 @@ function JobCard({
           }
           subheader={row.companyName}
           action={
-            <IconButton
-              size="small"
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                onToggleBookmark(row.jobId);
-              }}
-              aria-label={isBookmarked ? '북마크 해제' : '북마크'}
-            >
-              {isBookmarked ? <BookmarkIcon color="primary" /> : <BookmarkBorderIcon />}
-            </IconButton>
+            role === 'USER' && (
+              <IconButton
+                size="small"
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleBookmark(row.jobId, !!row.scrapped);
+                }}
+                aria-label={row.scrapped ? '북마크 해제' : '북마크'}
+              >
+                {row.scrapped ? <BookmarkIcon color="primary" /> : <BookmarkBorderIcon />}
+              </IconButton>
+            )
           }
         />
 
@@ -333,20 +336,22 @@ function EmployerCard({
 }
 
 export default function MainTopSections() {
+  const { role } = useAuth();
   const router = useRouter();
-
   const [topJobs, setTopJobs] = useState<TopJob[] | null>(null);
   const [empList, setEmpList] = useState<EmployerMini[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
 
-  const toggleBookmark = (jobId: number) => {
-    setBookmarks(prev => {
-      const next = new Set(prev);
-      if (next.has(jobId)) next.delete(jobId);
-      else next.add(jobId);
-      return next;
-    });
+  const toggleBookmark = async (jobId: number, scrapped: boolean) => {
+    if (scrapped) {
+      await api.delete(`/job/scrap/removeScrap/${jobId}`);
+    } else {
+      await api.post(`/job/scrap/addScrap/${jobId}`);
+    }
+    setTopJobs(
+      prev =>
+        prev?.map(job => (job.jobId === jobId ? { ...job, scrapped: !scrapped } : job)) ?? null
+    );
   };
 
   const openJob = useCallback(
@@ -441,7 +446,6 @@ export default function MainTopSections() {
                 <JobCard
                   key={row.jobId}
                   row={row}
-                  isBookmarked={bookmarks.has(row.jobId)}
                   onToggleBookmark={toggleBookmark}
                   onOpen={openJob}
                 />

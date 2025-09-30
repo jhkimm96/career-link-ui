@@ -48,6 +48,7 @@ interface JobPosting {
   postedAt?: string | null;
   deadline?: string | null;
   tags?: string[];
+  scrapped?: boolean;
 }
 
 /* 필터 응답 타입 */
@@ -94,7 +95,7 @@ type Envelope<T> = {
 };
 
 export default function JobPostingPage() {
-  const { role, isLoggedIn } = useAuth();
+  const { role } = useAuth();
   const isEmp = role === 'EMP';
   const router = useRouter();
 
@@ -116,14 +117,15 @@ export default function JobPostingPage() {
   const [serverTotalPages, setServerTotalPages] = useState(1);
   const pageSize = 16;
 
-  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
-  const toggleBookmark = (jobId: string) => {
-    setBookmarks(prev => {
-      const next = new Set(prev);
-      if (next.has(jobId)) next.delete(jobId);
-      else next.add(jobId);
-      return next;
-    });
+  const toggleBookmark = async (job: JobPosting) => {
+    if (job.scrapped) {
+      await api.delete(`/job/scrap/removeScrap/${job.jobId}`);
+      job.scrapped = false;
+    } else {
+      await api.post(`/job/scrap/addScrap/${job.jobId}`);
+      job.scrapped = true;
+    }
+    setRows(prev => [...prev]); // 상태 갱신
   };
 
   const fmtDate = (v?: string | null) => {
@@ -297,6 +299,7 @@ export default function JobPostingPage() {
         postedAt: r.postedAt ? String(r.postedAt) : null,
         deadline: r.deadline ? String(r.deadline) : null,
         tags: r.tags ?? [],
+        scrapped: r.scrapped ?? false,
       }));
 
       setRows(list);
@@ -762,7 +765,6 @@ export default function JobPostingPage() {
         ) : (
           rows.map(row => {
             const isOpenEnded = !row.deadline || row.deadline === '';
-            const isBookmarked = bookmarks.has(row.jobId);
             return (
               <Card
                 key={row.jobId}
@@ -825,13 +827,16 @@ export default function JobPostingPage() {
                     }
                     subheader={row.companyName}
                     action={
-                      isLoggedIn && (
+                      role === 'USER' && (
                         <Button
                           size="small"
-                          onClick={() => toggleBookmark(row.jobId)}
+                          onClick={e => {
+                            e.stopPropagation();
+                            toggleBookmark(row);
+                          }}
                           sx={{ minWidth: 'auto' }}
                         >
-                          {isBookmarked ? <BookmarkIcon color="primary" /> : <BookmarkBorderIcon />}
+                          {row.scrapped ? <BookmarkIcon color="primary" /> : <BookmarkBorderIcon />}
                         </Button>
                       )
                     }

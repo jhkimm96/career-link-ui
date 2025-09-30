@@ -62,7 +62,7 @@ async function fetchHot(params: {
 
 export default function HotPage() {
   const router = useRouter();
-  const { role, isLoggedIn } = useAuth();
+  const { role } = useAuth();
   const isEmp = role === 'EMP';
 
   const [items, setItems] = useState<HotItem[]>([]);
@@ -84,13 +84,22 @@ export default function HotPage() {
   }, []);
 
   const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
-  const toggleBookmark = (jobId: number) => {
-    setBookmarks(prev => {
-      const next = new Set(prev);
-      if (next.has(jobId)) next.delete(jobId);
-      else next.add(jobId);
-      return next;
-    });
+  const toggleBookmark = async (jobId: number) => {
+    try {
+      if (bookmarks.has(jobId)) {
+        await api.delete(`/job/scrap/removeScrap/${jobId}`);
+        setBookmarks(prev => {
+          const next = new Set(prev);
+          next.delete(jobId);
+          return next;
+        });
+      } else {
+        await api.post(`/job/scrap/addScrap/${jobId}`);
+        setBookmarks(prev => new Set(prev).add(jobId));
+      }
+    } catch (e: any) {
+      console.error('스크랩 토글 실패', e.message);
+    }
   };
 
   const loadingRef = useRef(loading);
@@ -318,7 +327,7 @@ export default function HotPage() {
                   }
                   subheader={row.companyName}
                   action={
-                    isLoggedIn && (
+                    role === 'USER' && (
                       <IconButton
                         size="small"
                         onClick={e => {
