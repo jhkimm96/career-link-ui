@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -36,12 +37,12 @@ export default function LinkCompletePage() {
       )}
 
       <div className="flex gap-2">
-        <a href="/login" className="rounded px-4 py-2 border">
+        <Link href="/login" className="rounded px-4 py-2 border">
           {isSuccess ? '지금 로그인하기' : '로그인 화면으로 가기'}
-        </a>
-        <a href="/" className="rounded px-4 py-2 border">
+        </Link>
+        <Link href="/" className="rounded px-4 py-2 border">
           홈으로
-        </a>
+        </Link>
       </div>
     </main>
   );

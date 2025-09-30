@@ -1,28 +1,29 @@
 'use client';
 
+import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import {
+  Avatar,
   Box,
   Card,
+  CardActionArea,
   CardContent,
   CardHeader,
-  CardActionArea,
+  Chip,
   Container,
   Divider,
+  Grid,
   Paper,
   Stack,
-  Typography,
-  Avatar,
-  Chip,
-  Grid,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import { Building2 } from 'lucide-react';
 import api from '@/api/axios';
 import NotificationSnackbar from '@/components/snackBar';
 import { closeSnackbar, notifyError } from '@/api/apiNotify';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface JobPostingSummary {
   jobPostingId: number;
@@ -203,9 +204,9 @@ export default function EmpProfileViewPage() {
             label="홈페이지"
             value={
               data?.homepageUrl ? (
-                <a href={data.homepageUrl} target="_blank" rel="noopener noreferrer">
+                <Link href="/login" target="_blank" rel="noopener noreferrer">
                   {data.homepageUrl}
-                </a>
+                </Link>
               ) : (
                 '—'
               )
