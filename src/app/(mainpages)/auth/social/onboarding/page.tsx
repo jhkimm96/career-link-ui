@@ -26,7 +26,7 @@ import NotificationSnackbar from '@/components/snackBar';
 import { closeSnackbar, notifyError, notifySuccess } from '@/api/apiNotify';
 import { useAuth } from '@/libs/authContext';
 
-const API = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8080';
+const API = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 type Me = { email: string; userName: string; provider: string };
 
