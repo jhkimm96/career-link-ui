@@ -74,6 +74,7 @@ export default function SignupPage() {
 
   const [helperText, setHelperText] = React.useState({
     loginId: '',
+    password: '',
     confirmPassword: '',
     phoneNumber: '',
     email: '',
@@ -81,6 +82,7 @@ export default function SignupPage() {
   });
   const [hasError, setHasError] = React.useState({
     loginId: false,
+    password: false,
     confirmPassword: false,
     verifyCode: false,
     agreeTerms: true,
@@ -146,6 +148,11 @@ export default function SignupPage() {
     }
   }, [y, m, d]);
 
+  //정합성체크 정규식
+  const passwordRegExp = /^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,25}$/;
+
+  const phoneRegExp = /^01([0|1|6|7|8|9])-\d{3,4}-\d{4}$/;
+
   // 아이디 및 비밀번호 , 휴대폰 번호 형식 체크
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -176,6 +183,18 @@ export default function SignupPage() {
         setHasError(prev => ({ ...prev, loginId: true }));
         setIsIdChecked(false);
       }
+    } else if (name === 'password') {
+      setFormData(prev => ({ ...prev, [name]: value }));
+      if (passwordRegExp.test(e.target.value)) {
+        setHelperText(prev => ({ ...prev, password: '' }));
+        setHasError(prev => ({ ...prev, password: false }));
+      } else {
+        setHelperText(prev => ({
+          ...prev,
+          password: '영문, 숫자, 특수기호 조합으로 8-20자리 이상 입력해주세요.',
+        }));
+        setHasError(prev => ({ ...prev, password: true }));
+      }
     } else if (name === 'confirmPassword') {
       const isMatch = value === formData.password;
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -198,12 +217,9 @@ export default function SignupPage() {
         formatted = `${onlyNums.slice(0, 3)}-${onlyNums.slice(3, 7)}-${onlyNums.slice(7, 11)}`;
       }
 
-      const phoneRegex = /^01([0|1|6|7|8|9])-\d{3,4}-\d{4}$/;
-      const isValid = phoneRegex.test(formatted);
-
       setFormData(prev => ({ ...prev, [name]: formatted }));
 
-      if (!isValid && onlyNums.length >= 10) {
+      if (!phoneRegExp.test(formatted) && onlyNums.length >= 10) {
         setHelperText(prev => ({ ...prev, phoneNumber: '올바른 휴대폰 번호 형식이 아닙니다.' }));
         setHasError(prev => ({ ...prev, phoneNumber: true }));
       } else {
@@ -451,6 +467,8 @@ export default function SignupPage() {
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={handleChange}
+              error={hasError.password}
+              helperText={helperText.password}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
