@@ -69,95 +69,191 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <PagesSectionLayout>
+    <>
       <Box
         sx={{
-          p: 15,
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 1,
-          rowGap: 2,
+          width: '100%',
+          display: 'flex',
+          px: { xs: 2, sm: 4, md: 6, lg: 10 },
+          py: { xs: 4, md: 8 },
         }}
       >
-        <TextField
-          label="아이디"
-          value={loginId}
-          fullWidth
-          sx={{ marginBottom: 2 }}
-          onChange={e => setLoginId(e.target.value)}
-        />
-
-        <TextField
-          label="비밀번호"
-          type={showPassword ? 'text' : 'password'}
-          value={password}
-          fullWidth
-          sx={{ marginBottom: 1 }}
-          onChange={e => setPassword(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={() => setShowPassword(prev => !prev)} edge="end">
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: { xs: '100%', md: '1400px' },
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: { xs: 'flex-start', md: 'stretch' },
+            justifyContent: 'flex-start',
+            columnGap: { md: 10, lg: 12 },
+            rowGap: { xs: 4, md: 0 },
           }}
-        />
-
-        <Box display="flex" gap={2} marginBottom={2}>
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ flex: 1 }}
-            onClick={handleSubmit}
-          >
-            로그인
-          </Button>
-          <Button
-            variant="outlined"
-            color="primary"
-            fullWidth
-            sx={{ flex: 1 }}
-            onClick={() => {
-              router.push('/signup');
+        >
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1,
+              p: { xs: 3, sm: 4 },
+              width: '100%',
+              maxWidth: { xs: '100%', sm: 400, md: 480 },
+              flexShrink: 0,
+              mr: { xs: 0, md: 2 },
+              height: { xs: 'auto', md: '100%' },
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
-            회원가입
-          </Button>
-        </Box>
-        <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button size={'small'} onClick={() => router.push('/login/find/id')}>
-            아이디찾기
-          </Button>
-          <Button size={'small'} onClick={() => router.push('/login/find/pwd')}>
-            비밀번호찾기
-          </Button>
-        </Stack>
-        <Divider>
-          <Typography variant="body2" color="text.secondary">
-            간편로그인
-          </Typography>
-        </Divider>
-        <Box display="flex" justifyContent="center" mt={2}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <KakaoIconButton />
-            <GoogleIconButton />
-          </Stack>
+            <Box
+              sx={{
+                flexGrow: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: { xs: 'flex-start', md: 'center' },
+              }}
+            >
+              <TextField
+                label="아이디"
+                value={loginId}
+                fullWidth
+                sx={{ mb: 2 }}
+                onChange={e => setLoginId(e.target.value)}
+              />
+
+              <TextField
+                label="비밀번호"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                fullWidth
+                sx={{ mb: 2 }}
+                onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(prev => !prev)} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 2,
+                  mb: 2,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  sx={{ flex: 1, minWidth: 120 }}
+                  onClick={handleSubmit}
+                >
+                  로그인
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  fullWidth
+                  sx={{ flex: 1, minWidth: 120 }}
+                  onClick={() => {
+                    router.push('/signup');
+                  }}
+                >
+                  회원가입
+                </Button>
+              </Box>
+
+              <Stack
+                direction="row"
+                spacing={1}
+                justifyContent="flex-end"
+                sx={{
+                  flexWrap: 'wrap',
+                  rowGap: 1,
+                  mb: 2,
+                  typography: 'caption',
+                  textAlign: 'right',
+                }}
+              >
+                <Button
+                  size="small"
+                  sx={{ minWidth: 'auto', p: 0 }}
+                  onClick={() => router.push('/login/find/id')}
+                >
+                  아이디찾기
+                </Button>
+                <Typography variant="caption" color="text.disabled">
+                  |
+                </Typography>
+                <Button
+                  size="small"
+                  sx={{ minWidth: 'auto', p: 0 }}
+                  onClick={() => router.push('/login/find/pwd')}
+                >
+                  비밀번호찾기
+                </Button>
+              </Stack>
+
+              <Divider sx={{ my: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  간편로그인
+                </Typography>
+              </Divider>
+
+              <Stack
+                direction="row"
+                spacing={2}
+                justifyContent="center"
+                alignItems="center"
+                sx={{ mb: 1 }}
+              >
+                {/* <KakaoIconButton /> */}
+                <GoogleIconButton />
+              </Stack>
+            </Box>
+          </Box>
+
+          {/* 이미지 (모바일에서는 안 보임) */}
+          <Box
+            sx={{
+              display: { xs: 'none', md: 'flex' },
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start',
+              flexGrow: 1,
+              maxWidth: 480,
+              height: { xs: 'auto', md: '100%' },
+            }}
+          >
+            <Image
+              src="/cardImg_new.png"
+              alt="logo"
+              width={480}
+              height={640}
+              style={{
+                width: '100%',
+                height: 'auto',
+                objectFit: 'contain',
+              }}
+            />
+          </Box>
         </Box>
       </Box>
-      <Box display="flex" justifyContent="center" alignItems="center" flex={1} p={2}>
-        <Image src="/cardImg_new.png" alt="logo" width={400} height={200} />
-      </Box>
+
+      {/* 스낵바 */}
       <NotificationSnackbar
         open={snackbar.open}
         message={snackbar.message}
         severity={snackbar.severity}
         onClose={handleClose}
       />
-    </PagesSectionLayout>
+    </>
   );
 };
 
